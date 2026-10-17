@@ -38,3 +38,17 @@ GitHubでCloudflareの失敗は確認できましたが、原因を示すビル�
 ## 変更範囲
 
 今回追加したのはこの調査記録だけです。KURACAL、既存デザイン、noindex、mainは変更しません。原因修正とCloudflare正常公開は、ログ取得まで未完了です。
+
+## 解決（後続確認）
+
+ユーザーから共有された実ログのエラーは `Your Wrangler configuration is missing a previews block` でした。Cloudflare公式ドキュメントとWrangler 4.151.1の実装を確認し、静的サイトでは空の `[previews]` が使用できることを確認。既存のassets・build・互換性設定は変更せず、空ブロックを追加しました。
+
+修正コミット `5aecf8c` をPR #1へpush後、GitHubの `Workers Builds: kaden-kaiketsu-note` がcompleted / successになり、Cloudflare botのBuild・Deployment両方のSuccessを確認しました。Build ID: `75ea0f26-7346-4f07-b3bb-ebcec3d4c9e4`。
+
+プレビュー：https://content-troubleshooting-strategy-20261017-kaden-kaiketsu-note.akirasauna.workers.dev
+
+プレビュー実URLで全13記事を含む23ルート×375/768/1440pxの69表示、検索・6カテゴリ・チェック保存・コピー・404・転送を再検査して合格。CSSのHTTP 200・text/css・青色ボタンへの適用も確認。HTMLのnoindex,nofollowとCloudflareプレビューのX-Robots-Tag: noindexを確認しました。プレビューではヘッダーがnoindexになるため、検査はnoindexの有無を判定し、HTML側のnoindex,nofollowは従来どおり確認します。
+
+この成功はプレビュー環境のものです。mainへのマージや本番へのデプロイは行っていません。KURACAL・13記事・CSS・noindex設定の変更はありません。
+
+参照：https://developers.cloudflare.com/workers/previews/configuration/#wrangler-configuration-file

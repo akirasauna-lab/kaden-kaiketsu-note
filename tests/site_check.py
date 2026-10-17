@@ -26,7 +26,7 @@ with sync_playwright() as pw:
             assert page.locator('h1').count()==1
             assert page.locator('meta[name="robots"]').get_attribute('content')=='noindex,nofollow'
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'),(width,route)
-            if os.environ.get('SITE_TEST_URL'):assert response.headers.get('x-robots-tag')=='noindex, nofollow'
+            if os.environ.get('SITE_TEST_URL'):assert 'noindex' in {x.strip().lower() for x in response.headers.get('x-robots-tag','').split(',')}
             if '/articles/' in route:
                 assert page.locator('#causes').is_visible() and page.locator('#sources a').count()>0
                 assert '実機検証：未実施' in page.locator('article').inner_text()
