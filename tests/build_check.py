@@ -3,8 +3,12 @@ import json, os, shutil, subprocess, sys, tempfile
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit, unquote
+from urllib.robotparser import RobotFileParser
+import tomllib
 from xml.etree import ElementTree as ET
 ROOT=Path(__file__).resolve().parents[1]
+assert not (ROOT/'robots.txt').exists(), 'Do not restore the obsolete root robots.txt; build.py generates site/robots.txt.'
+assert tomllib.loads((ROOT/'wrangler.toml').read_text())['assets']['directory']=='./site'
 sys.path.insert(0,str(ROOT))
 from publication_context import command_from_argv,detect_wrangler_command,indexing_allowed
 ORIGIN='https://kaden-kaiketsu.com'
@@ -48,6 +52,11 @@ def inspect(root,public=False):
             assert path.exists(),(f,u)
             if parts.fragment:assert parts.fragment in pages[path].ids,(f,u)
     headers=(site/'_headers').read_text()
+    robots=RobotFileParser();robots.parse((site/'robots.txt').read_text().splitlines())
+    for agent in ('Googlebot','Google-InspectionTool','*'):
+        for p in pages.values():
+            for url in p.canonicals:
+                assert robots.can_fetch(agent,url)==public,(agent,url,public)
     if public:
         assert 'X-Robots-Tag' not in headers.split('/.well-known/publication.json')[0]
         assert (site/'robots.txt').read_text()==f'User-agent: *\nAllow: /\nSitemap: {ORIGIN}/sitemap.xml\n'
