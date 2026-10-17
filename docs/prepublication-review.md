@@ -1,5 +1,7 @@
 # 公開前品質確認（2026-10-17）
 
+> SEO切り替えの最新仕様は [Google検索への公開準備](search-launch-preparation.md) を参照してください。以下には以前の固定noindex仕様の記録を含みます。
+
 対象：`akirasauna-lab/kaden-kaiketsu-note`。ブランチ：`content/troubleshooting-strategy-20261017`。この記録は前回の `content-strategy.md` に残した「既存10記事は未再照合」という状態を更新するものです。
 
 ## 結果
