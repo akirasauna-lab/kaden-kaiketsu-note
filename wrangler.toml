@@ -9,3 +9,6 @@ watch_dir = ["content", "build.py"]
 directory = "./site"
 html_handling = "force-trailing-slash"
 not_found_handling = "404-page"
+
+# Static previews share the top-level assets and compatibility settings.
+[previews]
