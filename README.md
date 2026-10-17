@@ -2,10 +2,11 @@
 
 家電トラブルを公式情報から整理する、白・青を基調とした静的サイトです。テレビ・動画配信、洗濯機、エアコン、Wi-Fi、スマートホーム、スマホ・PCの6カテゴリ・13記事。
 
-**現在は公開準備版です。noindexを維持し、mainへのマージや本番公開は行いません。**
+本番mainの承認済みdeployだけ検索公開し、プレビュー・ローカルはnoindexを維持します。PRのマージは運営者が確認してから行います。
 
 ## 最新の確認記録
 
+- [robots.txt・Googlebotの本番検査とSearch Consoleの再確認](docs/googlebot-robots-review.md)
 - [Cloudflareの追加環境変数なしで検索公開する最新仕様](docs/cloudflare-no-dashboard-variables.md)
 
 - [確定ドメイン・連絡先と本番公開前の最終確認](docs/search-publication-release.md)
@@ -34,6 +35,8 @@ npm run dev
 
 ルートの `index.html` / `articles.json` / ZIP は旧配布物です。配信しないでください。Cloudflareはwrangler.tomlに従いsite/のみ配信します。
 
+robots.txtの生成元は `build.py` のみです。配信される `/robots.txt` は `site/robots.txt` に対応します。旧ルートの同名ファイルは削除しました。チェックイン済みのsite/は安全なプレビュー用のためDisallowですが、承認済みmain deployのビルド時にAllowと正式sitemapへ置き換わります。
+
 ## 検査
 
 ```text
@@ -41,7 +44,10 @@ python -m pip install -r requirements-dev.txt
 python -m playwright install chromium
 python tests/build_check.py
 python tests/site_check.py
+python tests/live_seo_check.py https://kaden-kaiketsu.com production
 ```
+
+Cloudflareのプレビューは `python tests/live_seo_check.py <プレビューURL> preview` で別に検査します。User-Agentを変える検査はGoogle実IPからの到達を保証しません。
 
 `SITE_TEST_URL` でWorkersローカルURLを指定可能。実施済み：23ルート×375/768/1440px、内部リンクとアンカー、全カテゴリ・検索、チェック保存とコピー、404、WorkersのURL転送とnoindexヘッダー。
 
