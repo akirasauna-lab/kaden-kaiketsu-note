@@ -1,5 +1,9 @@
 # Google検索への正式公開準備（2026-10-17）
 
+> 手動のビルド変数追加は廃止しました。[追加環境変数なしの最新仕様](cloudflare-no-dashboard-variables.md) を参照してください。以下には過去の手順を含みます。
+
+> これは準備時点の記録です。ドメイン・連絡先・承認の確定後の状態は [検索公開の最終確認](search-publication-release.md) を参照してください。
+
 ## 現在の状態
 
 検索公開はまだ承認されていません。`config/publication.json` の `indexing_approved` はfalse、production_originは未確定です。HTMLとCloudflare静的レスポンスのnoindexを維持します。13記事と白・青のCSSは変更していません。運営者表示名は「家電の解決ノート編集部」を仮設定し、問い合わせ先は「準備中」と表示します。架空のメールアドレス・AdSense ID・Search Console確認コードは作成しません。

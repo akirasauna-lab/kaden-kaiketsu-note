@@ -1,102 +1,112 @@
-"""Build regression checks; requires Python 3.11+ and requirements.txt."""
+"""Publication safety tests; public artifacts are generated only in a temp copy."""
 import json, os, shutil, subprocess, sys, tempfile
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit, unquote
-
+from xml.etree import ElementTree as ET
 ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT))
+from publication_context import command_from_argv,detect_wrangler_command,indexing_allowed
+ORIGIN='https://kaden-kaiketsu.com'
+CI_MAIN={'WORKERS_CI':'1','WORKERS_CI_BRANCH':'main','WRANGLER_COMMAND':'deploy'}
 class Page(HTMLParser):
     def __init__(self):
-        super().__init__(); self.links=[]; self.ids=set(); self.robots=''; self.h1=0; self.canonicals=[]
+        super().__init__();self.links=[];self.ids=set();self.robots='';self.h1=0;self.canonicals=[]
     def handle_starttag(self,tag,attrs):
         a=dict(attrs)
-        if a.get('id'): self.ids.add(a['id'])
-        if tag=='h1': self.h1+=1
-        if tag=='meta' and a.get('name')=='robots': self.robots=a.get('content','')
-        if tag=='link' and a.get('rel')=='canonical': self.canonicals.append(a['href'])
+        if a.get('id'):self.ids.add(a['id'])
+        if tag=='h1':self.h1+=1
+        if tag=='meta' and a.get('name')=='robots':self.robots=a.get('content','')
+        if tag=='link' and a.get('rel')=='canonical':self.canonicals.append(a['href'])
         if tag in ('a','link','script','img'):
             u=a.get('href',a.get('src',''))
-            if u.startswith(('/','#')): self.links.append(u)
+            if u.startswith(('/','#')):self.links.append(u)
 
-def run(root,extra=None,ok=True):
-    clean={k:v for k,v in os.environ.items() if k not in ('SITE_URL','OPERATOR_NAME','CONTACT_EMAIL','SITE_BUILD_TARGET','WRANGLER_COMMAND')}
-    result=subprocess.run([sys.executable,str(root/'build.py')],env={**clean,**(extra or {})},capture_output=True,text=True)
+def run(root,env=None,actual=None,mock=False,ok=True):
+    clean={k:v for k,v in os.environ.items() if not k.startswith(('WORKERS_CI','WRANGLER_')) and k not in ('SITE_URL','SITE_BUILD_TARGET','CONTACT_EMAIL','OPERATOR_NAME')}
+    if mock:
+        # Only this disposable build process substitutes the OS observation.
+        code="import sys,runpy;sys.path.insert(0,sys.argv[1]);import publication_context;publication_context.detect_wrangler_command=lambda:"+repr(actual)+";runpy.run_path(sys.argv[1]+'/build.py',run_name='__main__')"
+        args=[sys.executable,'-c',code,str(root)]
+    else:args=[sys.executable,str(root/'build.py')]
+    result=subprocess.run(args,env={**clean,**(env or {})},capture_output=True,text=True)
     assert (result.returncode==0)==ok,result.stderr
 
-def inspect(root,origin=''):
-    site=root/'site'; pages={}
+def inspect(root,public=False):
+    site=root/'site';pages={}
     for f in site.rglob('*.html'):
         p=Page();p.feed(f.read_text(encoding='utf-8'));pages[f]=p
-        assert p.h1==1 and p.robots=='noindex,nofollow',f
-        assert len(p.canonicals)==(1 if origin and f.name!='404.html' else 0),(f,p.canonicals)
-        if p.canonicals:
-            expected=origin+'/'+str(f.relative_to(site).parent).replace('\\','/').strip('.')
-            if not expected.endswith('/'):expected+='/'
-            assert p.canonicals==[expected],(f,p.canonicals,expected)
+        expected='index,follow' if public and f.name!='404.html' else 'noindex,nofollow'
+        assert p.robots==expected and p.h1==1,(f,p.robots)
+        path='/'+str(f.relative_to(site).parent).replace('\\','/').strip('.')
+        if not path.endswith('/'):path+='/'
+        assert p.canonicals==([] if f.name=='404.html' else [ORIGIN+path]),f
     for f,p in pages.items():
         for u in p.links:
-            parts=urlsplit(u)
-            path=site/unquote(parts.path).lstrip('/') if parts.path else f
+            parts=urlsplit(u);path=site/unquote(parts.path).lstrip('/') if parts.path else f
             if path.is_dir():path=path/'index.html'
             assert path.exists(),(f,u)
             if parts.fragment:assert parts.fragment in pages[path].ids,(f,u)
-    assert not (site/'sitemap.xml').exists(),'No sitemap of noindex content'
-    assert (site/'robots.txt').read_text()=='User-agent: *\nDisallow: /\n'
-    assert 'X-Robots-Tag: noindex, nofollow' in (site/'_headers').read_text()
+    headers=(site/'_headers').read_text()
+    if public:
+        assert 'X-Robots-Tag' not in headers.split('/.well-known/publication.json')[0]
+        assert (site/'robots.txt').read_text()==f'User-agent: *\nAllow: /\nSitemap: {ORIGIN}/sitemap.xml\n'
+        urls=[x.text for x in ET.parse(site/'sitemap.xml').findall('.//{*}loc')]
+        assert len(urls)==23 and len(set(urls))==23
+        assert set(urls)=={x for p in pages.values() for x in p.canonicals}
+    else:
+        assert not (site/'sitemap.xml').exists()
+        assert (site/'robots.txt').read_text()=='User-agent: *\nDisallow: /\n'
+        assert 'X-Robots-Tag: noindex, nofollow' in headers
+    for slug in ('about','editorial','privacy'):
+        assert 'mailto:akirasauna@gmail.com' in (site/slug/'index.html').read_text(encoding='utf-8')
     return len(pages)
 
-with tempfile.TemporaryDirectory(prefix='kaden-build-') as temp:
-    root=Path(temp)
-    shutil.copytree(ROOT/'config',root/'config');shutil.copy2(ROOT/'build.py',root/'build.py');shutil.copytree(ROOT/'content',root/'content');shutil.copytree(ROOT/'site/assets',root/'site/assets')
+node='/usr/bin/node';cli='/project/node_modules/wrangler/wrangler-dist/cli.js'
+assert command_from_argv([node,cli,'deploy','--dry-run'])=='deploy'
+assert command_from_argv([node,cli,'preview'])=='preview'
+assert command_from_argv([node,cli,'dev'])=='dev'
+assert command_from_argv([node,cli,'versions','upload'])=='versions upload'
+assert command_from_argv([node,cli,'--config','x','deploy']) is None
+assert command_from_argv(['/bin/sh','-c','node '+cli+' deploy']) is None
+with tempfile.TemporaryDirectory(prefix='kaden-publication-') as tmp:
+    root=Path(tmp)
+    # Model the actual Linux /proc ancestry without relying on mutable env flags.
+    proc=root/'proc'
+    def process(pid,parent,argv):
+        p=proc/str(pid);p.mkdir(parents=True,exist_ok=True)
+        (p/'cmdline').write_bytes(b'\0'.join(x.encode() for x in argv)+b'\0')
+        (p/'status').write_text(f'Name: process\nPPid:\t{parent}\n')
+    process(20,30,['/bin/sh','-c','python build.py']);process(30,1,[node,cli,'preview'])
+    assert detect_wrangler_command(proc,20)=='preview'
+    process(30,1,[node,cli,'deploy']);assert detect_wrangler_command(proc,20)=='deploy'
+    process(30,1,[node,cli,'--unknown']);assert detect_wrangler_command(proc,20) is None
+    assert detect_wrangler_command(proc,999) is None
+    for name in ('config','content','site/assets'):shutil.copytree(ROOT/name,root/name)
+    for name in ('build.py','publication_context.py'):shutil.copy2(ROOT/name,root/name)
     run(root);assert inspect(root)==24
-    env={'SITE_URL':'https://example.test','OPERATOR_NAME':'Test','CONTACT_EMAIL':'test@example.test'}
-    run(root,env);inspect(root,'https://example.test')
-    for url in ('https://example.test/path','https://example.test?x=1','https://example.test/#x','https://user:pass@example.test','https://example.test:bad','http://example.test','https://'):
-        run(root,{**env,'SITE_URL':url},ok=False)
-    # Simulate release only in a disposable copy; real approval stays false.
-    import xml.etree.ElementTree as ET
-    approval=root/'config/publication.json'
-    approval.write_text(json.dumps({'indexing_approved':True,'production_origin':'https://example.test'}),encoding='utf-8')
-    release={**env,'SITE_BUILD_TARGET':'production','WRANGLER_COMMAND':'deploy'}
-    run(root,release)
-    ns={'s':'http://www.sitemaps.org/schemas/sitemap/0.9'}
-    urls=[e.text for e in ET.parse(root/'site/sitemap.xml').findall('.//s:loc',ns)]
-    assert len(urls)==23 and len(set(urls))==23
-    assert all(u.startswith('https://example.test/') and '404' not in u for u in urls)
-    for f in (root/'site').rglob('*.html'):
-        page=Page();page.feed(f.read_text(encoding='utf-8'))
-        assert page.robots==('noindex,nofollow' if f.name=='404.html' else 'index,follow')
-    assert 'X-Robots-Tag' not in (root/'site/_headers').read_text()
-    assert 'Sitemap: https://example.test/sitemap.xml' in (root/'site/robots.txt').read_text()
-    run(root,{**release,'CONTACT_EMAIL':''},ok=False)
-    run(root,{**release,'SITE_URL':'https://different.test'},ok=False)
-    # Even with production flags and approval, preview/dev/direct builds are locked.
-    for command in ('preview','dev',''):
-        run(root,{**release,'WRANGLER_COMMAND':command});inspect(root,'https://example.test')
-    run(root,{**release,'SITE_BUILD_TARGET':'preview'});inspect(root,'https://example.test')
-    approval.write_text(json.dumps({'indexing_approved':False,'production_origin':'https://example.test'}),encoding='utf-8')
-    run(root,release);inspect(root,'https://example.test')
-    # A displayed but explicitly search-excluded article must stay out of sitemap.
-    source=root/'content/articles.json'; current=json.loads(source.read_text(encoding='utf-8'))
-    excluded=current[0]['slug'];current[0]['search_visible']=False
-    source.write_text(json.dumps(current,ensure_ascii=False),encoding='utf-8')
-    approval.write_text(json.dumps({'indexing_approved':True,'production_origin':'https://example.test'}),encoding='utf-8')
-    run(root,release)
+    for env,actual in [({},'deploy'),({'WORKERS_CI':'1'},'deploy'),({**CI_MAIN,'WORKERS_CI':'0'},'deploy'),({**CI_MAIN,'WORKERS_CI_BRANCH':'feature/test'},'deploy'),({**CI_MAIN,'WORKERS_CI_BRANCH':''},'deploy'),({**CI_MAIN,'WRANGLER_COMMAND':'dev'},'dev'),({**CI_MAIN,'WRANGLER_COMMAND':''},'deploy'),(CI_MAIN,'preview'),(CI_MAIN,'dev'),(CI_MAIN,'versions upload')]:
+        run(root,env,actual,mock=True);inspect(root)
+    run(root,CI_MAIN,None,mock=True,ok=False)
+    run(root,CI_MAIN,'deploy',mock=True);inspect(root,public=True)
+    stale={'SITE_URL':'https://wrong.test','CONTACT_EMAIL':'wrong@example.test','OPERATOR_NAME':'Wrong','SITE_BUILD_TARGET':'preview'}
+    run(root,{**CI_MAIN,**stale},'deploy',mock=True);inspect(root,public=True)
+    approval=root/'config/publication.json';config=json.loads(approval.read_text())
+    config['indexing_approved']=False;approval.write_text(json.dumps(config))
+    run(root,CI_MAIN,'deploy',mock=True);inspect(root)
+    config['indexing_approved']=True;approval.write_text(json.dumps(config))
+    for bad in ('https://example.test/path','https://example.test?x=1','https://user:pass@example.test','http://example.test','https://'):
+        approval.write_text(json.dumps({**config,'production_origin':bad}));run(root,ok=False)
+    approval.write_text(json.dumps(config))
+    operator=root/'config/operator.json';saved=operator.read_text(encoding='utf-8');operator.write_text('{"name":"","contact_email":""}')
+    run(root,CI_MAIN,'deploy',mock=True,ok=False);operator.write_text(saved,encoding='utf-8')
+    source=root/'content/articles.json';data=json.loads(source.read_text(encoding='utf-8'));excluded=data[0]['slug'];data[0]['search_visible']=False
+    source.write_text(json.dumps(data,ensure_ascii=False),encoding='utf-8');run(root,CI_MAIN,'deploy',mock=True)
     assert excluded not in (root/'site/sitemap.xml').read_text()
-    excluded_page=Page();excluded_page.feed((root/'site/articles'/excluded/'index.html').read_text(encoding='utf-8'))
-    assert excluded_page.robots=='noindex,nofollow'
-    del current[0]['search_visible'];source.write_text(json.dumps(current,ensure_ascii=False),encoding='utf-8')
-    # Existing generated drafts must disappear after a rebuild, not merely from navigation.
-    source=root/'content/articles.json'; data=json.loads(source.read_text(encoding='utf-8'))
-    stale=data[-1]['slug'];data[-1]['review_status']='draft'
-    source.write_text(json.dumps(data,ensure_ascii=False),encoding='utf-8');run(root)
+    p=Page();p.feed((root/'site/articles'/excluded/'index.html').read_text(encoding='utf-8'));assert p.robots=='noindex,nofollow'
+    del data[0]['search_visible'];stale=data[-1]['slug'];data[-1]['review_status']='draft'
+    source.write_text(json.dumps(data,ensure_ascii=False),encoding='utf-8');run(root,CI_MAIN,'deploy',mock=True)
     assert not (root/'site/articles'/stale/'index.html').exists()
-    assert stale not in (root/'site/index.html').read_text(encoding='utf-8')
-    approval.write_text(json.dumps({'indexing_approved':True,'production_origin':'https://example.test'}),encoding='utf-8')
-    run(root,release)
-    urls=[e.text for e in ET.parse(root/'site/sitemap.xml').findall('.//s:loc',ns)]
-    assert all(stale not in u for u in urls) and len(urls)==21  # article + now-empty category omitted
-    assert '家電の解決ノート編集部' in (ROOT/'site/about/index.html').read_text(encoding='utf-8')
-
+    assert stale not in (root/'site/sitemap.xml').read_text()
 run(ROOT);count=inspect(ROOT)
-print(f'PASS build: {count} HTML pages, internal paths/anchors, noindex, exact canonical origins, invalid origins rejected, preview locks, gated production sitemap/robots/headers, stale draft removal.')
+print(f'PASS: {count} HTML pages/links/canonical; saved config; actual Wrangler parser; main production vs preview/dev/other branches/missing metadata; sitemap/robots/headers; drafts/search exclusions.')

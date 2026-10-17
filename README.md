@@ -6,6 +6,10 @@
 
 ## 最新の確認記録
 
+- [Cloudflareの追加環境変数なしで検索公開する最新仕様](docs/cloudflare-no-dashboard-variables.md)
+
+- [確定ドメイン・連絡先と本番公開前の最終確認](docs/search-publication-release.md)
+
 - [Google検索への公開準備・承認後の切り替え・Search Console・AdSense残件](docs/search-launch-preparation.md)
 
 - [公開前品質確認・未確認事項](docs/prepublication-review.md)
@@ -43,8 +47,8 @@ python tests/site_check.py
 
 ## SEO・連絡先
 
-既定はnoindexです。`config/publication.json` の承認はfalseのままです。正式URL未設定ならcanonicalを省略しsitemapを生成しません。仮の運営者表示名は「家電の解決ノート編集部」、問い合わせ先は未設定です。
+公開値は `config/publication.json` と `config/operator.json` だけから読みます。管理画面へのSITE_URL等の追加は不要です。
 
-明示承認後、承認ファイルの正式origin・SITE_URL・実問い合わせ先・本番ビルド指定・wrangler deployがそろった場合のみ、公開対象ページのsitemapとAllowのrobotsを生成できます。preview/dev/通常ビルドは引き続きnoindex。設定詳細は最新の公開準備手順を参照してください。
+承認true・Cloudflare Workers Buildsのmain・実際のWrangler deployを確認できた場合だけ検索公開します。preview/dev/他ブランチはnoindex。main本番の識別情報が不明なら停止します。詳細とマージ後の検査は最新仕様を参照してください。
 
 収益目標はAdSense月1万円。必要PVの試算は戦略書を参照し、実測ページRPMとPVで判断します。検索流入・審査承認・収益達成を保証しません。

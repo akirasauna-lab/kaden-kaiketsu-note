@@ -1,5 +1,7 @@
 # Cloudflare Workers 配信準備
 
+> 手動のビルド変数追加は廃止しました。[追加環境変数なしの最新仕様](cloudflare-no-dashboard-variables.md) を参照してください。以下には過去の手順を含みます。
+
 > SEO切り替えの最新仕様は [Google検索への公開準備](search-launch-preparation.md) を参照してください。以下には以前の固定noindex仕様の記録を含みます。
 
 このブランチはnoindexを維持した公開準備版です。mainへのマージ・本番デプロイは未実施です。以下のデプロイ手順は対象アカウントと公開内容を確認してから実行する将来用です。
