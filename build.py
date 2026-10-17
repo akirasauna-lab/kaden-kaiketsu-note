@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Dependency-free (except Jinja2) static site generator for 家電の解決ノート.
-Usage: pip install jinja2 && SITE_URL=https://your-domain.jp python build.py
-Without SITE_URL, generated pages work locally and omit canonical and sitemap absolute URLs.
+Usage: pip install -r requirements.txt; python build.py (noindex preview)
+Public values come from config/. Indexing requires a verified main Workers deploy.
 """
 import html, json, os, re
 from datetime import date
@@ -19,22 +19,24 @@ for a in DATA:
             if not a.get(field): raise ValueError(f"Missing review field: {a['slug']} {field}")
         if a.get('hardware_tested') is not False:
             raise ValueError('Hardware claims require a separate evidence workflow')
-SITE_URL=os.environ.get('SITE_URL','').rstrip('/')
-OPERATOR=json.loads((ROOT/'config/operator.json').read_text(encoding='utf-8'))
-CONTACT_EMAIL=os.environ.get('CONTACT_EMAIL',OPERATOR['contact_email']).strip()
-OPERATOR_NAME=os.environ.get('OPERATOR_NAME',OPERATOR['name']).strip()
+import sys
+sys.path.insert(0,str(ROOT))
+from publication_context import detect_wrangler_command, indexing_allowed
 PUBLICATION=json.loads((ROOT/'config/publication.json').read_text(encoding='utf-8'))
-BUILD_TARGET=os.environ.get('SITE_BUILD_TARGET','preview')
-WRANGLER_COMMAND=os.environ.get('WRANGLER_COMMAND','')
-INDEXING_ENABLED=(PUBLICATION.get('indexing_approved') is True
-    and BUILD_TARGET=='production' and WRANGLER_COMMAND=='deploy')
+OPERATOR=json.loads((ROOT/'config/operator.json').read_text(encoding='utf-8'))
+# Public configuration has one source of truth; no dashboard variables needed.
+SITE_URL=PUBLICATION.get('production_origin','').rstrip('/')
+CONTACT_EMAIL=OPERATOR.get('contact_email','').strip()
+OPERATOR_NAME=OPERATOR.get('name','').strip()
+ACTUAL_COMMAND=detect_wrangler_command()
+INDEXING_ENABLED=indexing_allowed(PUBLICATION.get('indexing_approved'),os.environ,ACTUAL_COMMAND)
+print('Publication context: workers_ci='+os.environ.get('WORKERS_CI','unknown')
+      +'; branch='+os.environ.get('WORKERS_CI_BRANCH','unknown')
+      +'; actual_wrangler='+str(ACTUAL_COMMAND)+'; indexing='+str(INDEXING_ENABLED))
 if CONTACT_EMAIL and not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', CONTACT_EMAIL):
-    raise ValueError('CONTACT_EMAIL must be a valid email address')
-if INDEXING_ENABLED and (not SITE_URL or not os.environ.get('CONTACT_EMAIL','').strip()
-        or not os.environ.get('OPERATOR_NAME','').strip()
-        or CONTACT_EMAIL!=OPERATOR['contact_email'] or OPERATOR_NAME!=OPERATOR['name']
-        or SITE_URL!=PUBLICATION.get('production_origin')):
-    raise ValueError('Approved production deploy requires matching production_origin, SITE_URL, operator and real contact')
+    raise ValueError('Configured contact_email must be a valid email address')
+if INDEXING_ENABLED and not (SITE_URL and CONTACT_EMAIL and OPERATOR_NAME):
+    raise ValueError('Approved production deploy requires configured origin, operator and contact')
 if SITE_URL:
     origin=urlparse(SITE_URL)
     if (origin.scheme!='https' or not origin.hostname or origin.path not in ('','/')
@@ -224,5 +226,15 @@ else:
     sitemap.unlink(missing_ok=True)
     output(Path('robots.txt'),'User-agent: *\nDisallow: /\n')
     headers+='  X-Robots-Tag: noindex, nofollow\n'
+# Public, non-sensitive build evidence; no secrets or arbitrary env dumps.
+output(Path('.well-known/publication.json'),json.dumps({
+    'workers_ci':os.environ.get('WORKERS_CI')=='1',
+    'branch':os.environ.get('WORKERS_CI_BRANCH') or None,
+    'actual_wrangler_command':ACTUAL_COMMAND,
+    'wrangler_build_command':os.environ.get('WRANGLER_COMMAND') or None,
+    'indexing_enabled':INDEXING_ENABLED,
+},ensure_ascii=False,indent=2)+'\n')
+headers+='\n/.well-known/publication.json\n  X-Robots-Tag: noindex, nofollow\n'
 output(Path('_headers'),headers)
 print(f'Generated {len(DATA)} articles, {len(NAV)} categories under {OUT}; indexing={INDEXING_ENABLED}')
+

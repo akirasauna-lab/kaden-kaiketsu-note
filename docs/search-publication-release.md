@@ -1,5 +1,7 @@
 # 正式検索公開の最終確認（2026-10-17）
 
+> 手動のビルド変数追加は廃止しました。[追加環境変数なしの最新仕様](cloudflare-no-dashboard-variables.md) を参照してください。以下には過去の手順を含みます。
+
 ## 確定内容
 
 - 正式URL： https://kaden-kaiketsu.com

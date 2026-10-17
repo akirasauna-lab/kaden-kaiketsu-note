@@ -3,7 +3,7 @@ compatibility_date = "2026-10-17"
 
 [build]
 command = "python build.py"
-watch_dir = ["content", "config", "build.py"]
+watch_dir = ["content", "config", "build.py", "publication_context.py"]
 
 [assets]
 directory = "./site"

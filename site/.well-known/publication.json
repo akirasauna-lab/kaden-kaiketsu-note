@@ -1,0 +1,7 @@
+{
+  "workers_ci": false,
+  "branch": null,
+  "actual_wrangler_command": null,
+  "wrangler_build_command": "deploy",
+  "indexing_enabled": false
+}
