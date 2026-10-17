@@ -1,0 +1,224 @@
+[
+  {
+    "slug": "fire-tv-wifi-connect",
+    "checked": "2026-10-17",
+    "status": "official-text-compared",
+    "hardware_tested": false,
+    "scope": "Fire TV StickのWi-Fi接続。英語版公式ヘルプを含み、日本向け全世代の画面表記・操作差は未確認。",
+    "sources": [
+      {
+        "title": "Amazon公式：Fire TVのWi-Fi接続トラブル（英語版）",
+        "url": "https://digprjsurvey.amazon.co.uk/csad/help/node/GYMDPRQTTLXQD7PL",
+        "official_text_read": true
+      },
+      {
+        "title": "Amazon公式：初期設定時にWi-Fiへ接続できない場合（英語版）",
+        "url": "https://digprjsurvey.amazon.co.uk/csad/help/node/G26UTV6XDUH28PHQ?theme=light",
+        "official_text_read": true
+      },
+      {
+        "title": "Amazon Japan公式：接続・再起動とよくある質問",
+        "url": "https://www.aboutamazon.jp/news/devices/how-to-connect-a-fire-tv-stick-to-your-tv",
+        "official_text_read": true
+      }
+    ]
+  },
+  {
+    "slug": "fire-tv-no-picture",
+    "checked": "2026-10-17",
+    "status": "official-text-compared",
+    "hardware_tested": false,
+    "scope": "外付けFire TV Stick。テレビ自体の故障診断・全世代の給電仕様は対象外。",
+    "sources": [
+      {
+        "title": "Amazon公式：Fire TV Stickをテレビに接続する方法",
+        "url": "https://www.aboutamazon.jp/news/devices/how-to-connect-a-fire-tv-stick-to-your-tv",
+        "official_text_read": true
+      }
+    ]
+  },
+  {
+    "slug": "fire-tv-remote-unresponsive",
+    "checked": "2026-10-17",
+    "status": "official-text-compared",
+    "hardware_tested": false,
+    "scope": "Fire TV用リモコンの基本確認。英語版ヘルプも参照。全世代のリセット操作・テレビ側制御は未確認。",
+    "sources": [
+      {
+        "title": "Amazon公式：Fire TVリモコンのトラブルシューティング（英語版）",
+        "url": "https://digprjsurvey.amazon.co.uk/csad/help/node/TqBBjXe3NZaew58iSl",
+        "official_text_read": true
+      },
+      {
+        "title": "Amazon公式：Fire TV Stickの接続方法",
+        "url": "https://www.aboutamazon.jp/news/devices/how-to-connect-a-fire-tv-stick-to-your-tv",
+        "official_text_read": true
+      }
+    ]
+  },
+  {
+    "slug": "chromecast-device-not-found",
+    "checked": "2026-10-17",
+    "status": "official-text-compared",
+    "hardware_tested": false,
+    "scope": "Chromecast／Google Cast対応機器の検出。権限説明はiOS 14以降。機器・アプリごとの差あり。",
+    "sources": [
+      {
+        "title": "Google公式：キャスト先が見つからない",
+        "url": "https://support.google.com/chromecast/answer/3249268?hl=ja",
+        "official_text_read": true
+      },
+      {
+        "title": "Google公式：ローカルネットワークの権限",
+        "url": "https://support.google.com/chromecast/answer/10063094?hl=ja",
+        "official_text_read": true
+      }
+    ]
+  },
+  {
+    "slug": "chromecast-wifi-setup",
+    "checked": "2026-10-17",
+    "status": "official-text-compared",
+    "hardware_tested": false,
+    "scope": "Chromecast／Google TV StreamerのWi-Fi設定。機種・世代で設定画面と対応帯域が異なる。",
+    "sources": [
+      {
+        "title": "Google公式：Wi-Fiに接続できない",
+        "url": "https://support.google.com/chromecast/answer/7566322?hl=ja",
+        "official_text_read": true
+      },
+      {
+        "title": "Google公式：Wi-Fiが表示されない",
+        "url": "https://support.google.com/chromecast/answer/6292182?hl=ja",
+        "official_text_read": true
+      }
+    ]
+  },
+  {
+    "slug": "switchbot-hub2-wifi",
+    "checked": "2026-10-17",
+    "status": "official-text-compared",
+    "hardware_tested": false,
+    "scope": "SwitchBotハブ2。ハブミニ・ハブ3等への手順の流用は対象外。",
+    "sources": [
+      {
+        "title": "SwitchBot公式：ハブ2がインターネットに接続できない",
+        "url": "https://support.switch-bot.com/hc/ja/articles/24985719427735-Hub-2%E3%81%AF%E3%82%A4%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%8D%E3%83%83%E3%83%88%E6%8E%A5%E7%B6%9A%E3%81%8C%E3%81%A7%E3%81%8D%E3%81%AA%E3%81%84-%E3%81%A9%E3%81%86%E3%81%97%E3%81%9F%E3%82%89%E3%81%84%E3%81%84%E3%81%A7%E3%81%97%E3%82%87%E3%81%86%E3%81%8B",
+        "official_text_read": true
+      },
+      {
+        "title": "SwitchBot公式：ハブ2の赤外線ローカル操作",
+        "url": "https://support.switch-bot.com/hc/ja/articles/13306808642967-Hub-2%E3%81%AE%E8%B5%A4%E5%A4%96%E7%B7%9A%E3%83%AA%E3%83%A2%E3%82%B3%E3%83%B3%E3%81%AE%E3%83%AD%E3%83%BC%E3%82%AB%E3%83%AB%E6%93%8D%E4%BD%9C%E6%A9%9F%E8%83%BD%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6",
+        "official_text_read": true
+      }
+    ]
+  },
+  {
+    "slug": "switchbot-bot-not-working",
+    "checked": "2026-10-17",
+    "status": "official-text-compared",
+    "hardware_tested": false,
+    "scope": "CR2電池式SwitchBotボット。ボットChargeは対象外。ハブ接続はハブミニ／ハブ2を参照。",
+    "sources": [
+      {
+        "title": "SwitchBot公式：ボットがハブにつながらない（英語版・ハブミニ）",
+        "url": "https://support.switch-bot.com/hc/en-us/articles/8600459252503-SwitchBot-Bot-is-offline-and-not-connecting-to-the-Hub-Mini",
+        "official_text_read": true
+      },
+      {
+        "title": "SwitchBot公式：ボットが接続できない場合",
+        "url": "https://support.switch-bot.com/hc/ja/articles/8976631435031-%E3%83%9C%E3%83%83%E3%83%88%E3%81%8C%E6%8E%A5%E7%B6%9A%E3%81%A7%E3%81%8D%E3%81%AA%E3%81%84%E5%A0%B4%E5%90%88%E3%81%AF",
+        "official_text_read": true
+      },
+      {
+        "title": "SwitchBot公式：ボットをハブミニ／ハブ2へ接続",
+        "url": "https://support.switch-bot.com/hc/ja/articles/16299286523927-%E3%83%9C%E3%83%83%E3%83%88%E3%82%92%E3%83%8F%E3%83%96%E3%83%9F%E3%83%8B-%E3%83%8F%E3%83%962%E3%81%AB%E6%8E%A5%E7%B6%9A%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95",
+        "official_text_read": true
+      }
+    ]
+  },
+  {
+    "slug": "switchbot-ir-remote-register",
+    "checked": "2026-10-17",
+    "status": "official-text-compared",
+    "hardware_tested": false,
+    "scope": "公式が対象とするSwitchBotハブと赤外線リモコン。家電ごとの全ボタン互換性は未確認。",
+    "sources": [
+      {
+        "title": "SwitchBot公式：ハブに家電リモコンを追加できない",
+        "url": "https://support.switch-bot.com/hc/ja/articles/8069379964695-%E3%83%8F%E3%83%96%E3%83%9F%E3%83%8B%E3%81%A7%E5%AE%B6%E9%9B%BB%E3%83%AA%E3%83%A2%E3%82%B3%E3%83%B3%E3%82%92%E8%BF%BD%E5%8A%A0%E3%81%A7%E3%81%8D%E3%81%AA%E3%81%84-%E3%81%A9%E3%81%86%E3%81%97%E3%81%9F%E3%82%89%E3%81%84%E3%81%84%E3%81%A7%E3%81%97%E3%82%87%E3%81%86%E3%81%8B?sort_by=votes",
+        "official_text_read": true
+      }
+    ]
+  },
+  {
+    "slug": "iphone-wifi-unavailable",
+    "checked": "2026-10-17",
+    "status": "official-text-compared",
+    "hardware_tested": false,
+    "scope": "iPhoneのWi-Fi設定。会社・学校の管理設定は管理者に確認。iOS版により表記差あり。",
+    "sources": [
+      {
+        "title": "Apple公式サポート：iPhoneでWi-Fiに接続できない場合",
+        "url": "https://support.apple.com/ja-jp/111786",
+        "official_text_read": true
+      }
+    ]
+  },
+  {
+    "slug": "windows-wifi-trouble",
+    "checked": "2026-10-17",
+    "status": "official-text-compared",
+    "hardware_tested": false,
+    "scope": "Windows 11の基本的なWi-Fi確認。ドライバー削除・初期化・管理PCの設定変更は案内しない。",
+    "sources": [
+      {
+        "title": "Microsoft公式：WindowsでWi-Fi接続の問題を修正する",
+        "url": "https://support.microsoft.com/ja-jp/windows/experience/connectivity-networking/fix-wi-fi-connection-issues-in-windows",
+        "official_text_read": true
+      }
+    ]
+  },
+  {
+    "slug": "netflix-tv-freezes",
+    "checked": "2026-10-17",
+    "status": "official-text-compared",
+    "hardware_tested": false,
+    "scope": "Netflix対応スマートテレビ。メーカー別の操作差あり。",
+    "sources": [
+      {
+        "title": "Netflix公式：フリーズするがデバイスは機能する",
+        "url": "https://help.netflix.com/ja/node/100242",
+        "official_text_read": true
+      }
+    ]
+  },
+  {
+    "slug": "panasonic-topload-spin-vibration",
+    "checked": "2026-10-17",
+    "status": "official-text-compared",
+    "hardware_tested": false,
+    "scope": "パナソニック縦型洗濯機。ドラム式・他社は対象外。",
+    "sources": [
+      {
+        "title": "Panasonic公式：タテ型洗濯機・脱水時の振動",
+        "url": "https://jpn.faq.panasonic.com/app/answers/detail/a_id/41/",
+        "official_text_read": true
+      }
+    ]
+  },
+  {
+    "slug": "daikin-aircon-not-cooling",
+    "checked": "2026-10-17",
+    "status": "official-text-compared",
+    "hardware_tested": false,
+    "scope": "ダイキンのルームエアコンの冷房。業務用・暖房は対象外。",
+    "sources": [
+      {
+        "title": "ダイキン公式：冷えない・冷たい風が出ない",
+        "url": "https://nacpt.daikincc.com/faq/customer/web/knowledge3008.html",
+        "official_text_read": true
+      }
+    ]
+  }
+]

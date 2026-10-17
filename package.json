@@ -1,0 +1,1 @@
+{"name":"kaden-kaiketsu-note","private":true,"version":"0.1.0","scripts":{"build":"python build.py","check:deploy":"wrangler deploy --dry-run","dev":"wrangler dev"},"devDependencies":{"wrangler":"4.151.1"},"engines":{"node":">=22"}}
