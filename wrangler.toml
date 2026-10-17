@@ -1,6 +1,14 @@
 name = "kaden-kaiketsu-note"
 compatibility_date = "2026-10-17"
 
+[build]
+command = "python build.py"
+watch_dir = ["content", "build.py"]
+
 [assets]
 directory = "./site"
+html_handling = "force-trailing-slash"
 not_found_handling = "404-page"
+
+# Static previews share the top-level assets and compatibility settings.
+[previews]
