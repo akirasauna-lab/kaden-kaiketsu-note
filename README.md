@@ -6,6 +6,8 @@
 
 ## 最新の確認記録
 
+- [Google検索への公開準備・承認後の切り替え・Search Console・AdSense残件](docs/search-launch-preparation.md)
+
 - [公開前品質確認・未確認事項](docs/prepublication-review.md)
 - [Workers設定と将来の公開手順](docs/workers-publishing.md)
 - [初回の戦略・10候補の選別記録](docs/content-strategy.md)（当時の未検証事項は公開前品質確認で更新）
@@ -41,6 +43,8 @@ python tests/site_check.py
 
 ## SEO・連絡先
 
-SITE_URLなしではcanonicalを省略します。正式URLを設定する場合はOPERATOR_NAMEとCONTACT_EMAILも必須です。SITE_URLがあってもnoindexとrobotsのDisallowは外れず、sitemapは生成しません。正式な検索公開には別途承認と実装が必要です。
+既定はnoindexです。`config/publication.json` の承認はfalseのままです。正式URL未設定ならcanonicalを省略しsitemapを生成しません。仮の運営者表示名は「家電の解決ノート編集部」、問い合わせ先は未設定です。
+
+明示承認後、承認ファイルの正式origin・SITE_URL・実問い合わせ先・本番ビルド指定・wrangler deployがそろった場合のみ、公開対象ページのsitemapとAllowのrobotsを生成できます。preview/dev/通常ビルドは引き続きnoindex。設定詳細は最新の公開準備手順を参照してください。
 
 収益目標はAdSense月1万円。必要PVの試算は戦略書を参照し、実測ページRPMとPVで判断します。検索流入・審査承認・収益達成を保証しません。

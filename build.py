@@ -21,11 +21,17 @@ for a in DATA:
             raise ValueError('Hardware claims require a separate evidence workflow')
 SITE_URL=os.environ.get('SITE_URL','').rstrip('/')
 CONTACT_EMAIL=os.environ.get('CONTACT_EMAIL','').strip()
-OPERATOR_NAME=os.environ.get('OPERATOR_NAME','').strip()
+OPERATOR_NAME=os.environ.get('OPERATOR_NAME','家電の解決ノート編集部').strip()
+PUBLICATION=json.loads((ROOT/'config/publication.json').read_text(encoding='utf-8'))
+BUILD_TARGET=os.environ.get('SITE_BUILD_TARGET','preview')
+WRANGLER_COMMAND=os.environ.get('WRANGLER_COMMAND','')
+INDEXING_ENABLED=(PUBLICATION.get('indexing_approved') is True
+    and BUILD_TARGET=='production' and WRANGLER_COMMAND=='deploy')
 if CONTACT_EMAIL and not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', CONTACT_EMAIL):
     raise ValueError('CONTACT_EMAIL must be a valid email address')
-if SITE_URL and not (OPERATOR_NAME and CONTACT_EMAIL):
-    raise ValueError('Public production builds require OPERATOR_NAME and CONTACT_EMAIL')
+if INDEXING_ENABLED and (not SITE_URL or not CONTACT_EMAIL or not OPERATOR_NAME
+        or SITE_URL!=PUBLICATION.get('production_origin')):
+    raise ValueError('Approved production deploy requires matching production_origin, SITE_URL, operator and real contact')
 if SITE_URL:
     origin=urlparse(SITE_URL)
     if (origin.scheme!='https' or not origin.hostname or origin.path not in ('','/')
@@ -47,6 +53,11 @@ NAV=[('テレビ・動画','tv','tv'),('洗濯機','washing-machine','washer'),(
 for item in DATA:
     if item['slug'] in ('iphone-wifi-unavailable','windows-wifi-trouble'):
         item['category']='スマホ・PC'
+# Only these reviewed, generated pages can enter the production sitemap.
+PUBLIC_PATHS={'/','/about/','/editorial/','/privacy/'}
+PUBLIC_PATHS.update('/articles/'+a['slug']+'/' for a in DATA if a.get('review_status')=='official-reviewed' and a.get('search_visible',True) is True)
+PUBLIC_PATHS.update('/category/'+slug+'/' for name,slug,_ in NAV
+    if any(a['category']==name and a.get('review_status')=='official-reviewed' and a.get('search_visible',True) is True for a in DATA))
 CAT_SLUG={x[0]:x[1] for x in NAV}
 CAT_ICON={x[0]:x[2] for x in NAV}
 ICONS={
@@ -78,7 +89,7 @@ def icon(name,css=''):
 BASE='''<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>{{ page_title }}</title><meta name="description" content="{{ description }}" />
-<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#ffffff"><meta property="og:locale" content="ja_JP"><meta property="og:type" content="{{ og_type }}"/><meta property="og:site_name" content="家電の解決ノート"/><meta property="og:title" content="{{ page_title }}"/><meta property="og:description" content="{{ description }}"/>
+<meta name="robots" content="{{ robots }}"><meta name="theme-color" content="#ffffff"><meta property="og:locale" content="ja_JP"><meta property="og:type" content="{{ og_type }}"/><meta property="og:site_name" content="家電の解決ノート"/><meta property="og:title" content="{{ page_title }}"/><meta property="og:description" content="{{ description }}"/>
 {% if canonical %}<link rel="canonical" href="{{ canonical }}"/><meta property="og:url" content="{{ canonical }}"/>{% endif %}
 {% if site_url %}<meta property="og:image" content="{{ site_url }}/assets/og.svg"/>{% endif %}
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg"><link rel="stylesheet" href="/assets/styles.css">
@@ -100,7 +111,7 @@ def render(tpl, **kwargs):return env.from_string(tpl).render(**kwargs)
 def obj(data): return json.dumps(data,ensure_ascii=False,separators=(',',':')).replace('</','<\\/')
 def wrap(contents,path='/',title='',description='',og_type='website',structured=None):
     page_title = f'{title} | 家電の解決ノート' if title else '家電の解決ノート｜テレビ・洗濯機・エアコンの困りごと確認ガイド'
-    return render(BASE,content=contents,page_title=page_title,description=description or 'テレビ・動画配信、洗濯機、エアコンの具体的な症状を、公式情報をもとに順番に確認するガイド。',og_type=og_type,canonical=SITE_URL+path if SITE_URL and path else '',site_url=SITE_URL,structured=obj(structured) if structured else '',logo=icon('logo'),icon_search=icon('search'),icon_menu=icon('menu'),year=date.today().year)
+    return render(BASE,content=contents,page_title=page_title,description=description or 'テレビ・動画配信、洗濯機、エアコンの具体的な症状を、公式情報をもとに順番に確認するガイド。',og_type=og_type,canonical=SITE_URL+path if SITE_URL and path else '',site_url=SITE_URL,robots='index,follow' if INDEXING_ENABLED and path in PUBLIC_PATHS else 'noindex,nofollow',structured=obj(structured) if structured else '',logo=icon('logo'),icon_search=icon('search'),icon_menu=icon('menu'),year=date.today().year)
 def output(path,text):
     loc=OUT/path
     loc.parent.mkdir(parents=True,exist_ok=True)
@@ -172,22 +183,43 @@ for a in DATA:
 
 # Simple editorial pages
 STATIC={
-'about':('このサイトについて','家電の解決ノートは、家電の接続・設定・操作で困ったときに、確認する順番を整理した独立系の情報サイトです。', '''<h2>このサイトが目指すこと</h2><p>家電の説明書や公式ヘルプは情報が充実しています。一方で、困っているときには「最初に何から調べればいいか」がわからないこともあります。そこで私たちは、疑う原因を整理し、簡単に確認できることから順番に試せる記事をまとめています。</p><h2>取り扱うテーマ</h2><p>テレビ・動画配信機器、洗濯機、エアコン、Wi-Fi・ネット接続、スマートホーム、スマホ・パソコンなどを中心に扱います。記事ごとにメーカー公式の参照先を掲載します。</p><h2>独立した情報サイトです</h2><p>メーカー各社との提携や公式サポート窓口を示すものではありません。メーカー名や商品名は識別のために記載しています。</p><h2>運営者情報</h2><p>現在は公開準備版です。公開前に運営者名・連絡方法を確定して掲載します。</p>'''),
+'about':('このサイトについて','家電の解決ノートは、家電の接続・設定・操作で困ったときに、確認する順番を整理した独立系の情報サイトです。', '''<h2>このサイトが目指すこと</h2><p>家電の説明書や公式ヘルプは情報が充実しています。一方で、困っているときには「最初に何から調べればいいか」がわからないこともあります。そこで私たちは、疑う原因を整理し、簡単に確認できることから順番に試せる記事をまとめています。</p><h2>取り扱うテーマ</h2><p>テレビ・動画配信機器、洗濯機、エアコン、Wi-Fi・ネット接続、スマートホーム、スマホ・パソコンなどを中心に扱います。記事ごとにメーカー公式の参照先を掲載します。</p><h2>独立した情報サイトです</h2><p>メーカー各社との提携や公式サポート窓口を示すものではありません。メーカー名や商品名は識別のために記載しています。</p><h2>運営者情報</h2><p>運営：{operator_placeholder}。お問い合わせ窓口は準備中です。</p>'''),
 'editorial':('編集方針・免責事項','家電の解決ノートの編集方針、出典の取り扱い、注意事項について。', '''<h2>情報の確認方法</h2><p>記事はメーカーの公式サポートページや製品情報を優先して参照し、出典リンクを各記事に記載しています。すべての製品を実機検証したものではありません。確認できない事実を使用体験として表現しない方針です。</p><h2>安全性について</h2><p>分解、配線工事、高所での作業、発熱や異臭のある機器の継続使用を推奨しません。危険があるときは直ちに使用を中止し、メーカーや資格を持つ専門業者に相談してください。</p><h2>情報の更新</h2><p>機種・アプリ・OS・公式サポートの案内は変更されることがあります。掲載時点と異なる可能性があるため、最新情報は公式資料でご確認ください。</p><h2>免責事項</h2><p>掲載内容は一般的な参考情報であり、あらゆる機器・状況での効果を保証するものではありません。設定変更による影響を確認したうえで、ご自身の判断で操作してください。</p><h2>広告について</h2><p>将来的にディスプレイ広告を掲載する予定です。広告を掲載する場合は広告と記事を区別し、読者に誤認を与えない配置を採用します。</p>'''),
-'privacy':('プライバシーポリシー','家電の解決ノートのプライバシーポリシー。', '''<h2>取得する情報について</h2><p>この公開準備版のサイト自体は、会員登録や問い合わせフォームを設置しておらず、サイトの検索欄に入力した文字列を当サイトのサーバーへ送信する仕組みはありません。検索はブラウザ内で行われます。</p><h2>アクセス解析・広告配信</h2><p>現在の配布版には、Google AnalyticsやGoogle AdSenseの計測・広告タグは組み込まれていません。公開後に導入する場合は、利用するサービス、Cookie等の取扱い、オプトアウト方法などを追記して本ページを更新します。</p><h2>ブラウザへの保存</h2><p>記事のチェック機能は、お使いのブラウザのローカルストレージに確認状態を保存します。確認情報は当サイトのサーバーに送信されません。ブラウザのサイトデータを削除すると記録も削除されます。</p><h2>外部リンク</h2><p>メーカー公式サポートなどの外部サイトへのリンクがあります。移動先サイトには移動先のプライバシーポリシーが適用されます。</p><h2>ポリシーの更新</h2><p>機能・利用サービスの変更に合わせて本ポリシーを改定することがあります。</p><h2>お問い合わせ先</h2><p>公開前に連絡先を設定し、ここに掲載します。</p>''')
+'privacy':('プライバシーポリシー','家電の解決ノートのプライバシーポリシー。', '''<h2>取得する情報について</h2><p>当サイトは、会員登録や問い合わせフォームを設置しておらず、サイトの検索欄に入力した文字列を当サイトのサーバーへ送信する仕組みはありません。検索はブラウザ内で行われます。</p><h2>アクセス解析・広告配信</h2><p>現在のサイトには、Google AnalyticsやGoogle AdSenseの計測・広告タグは組み込まれていません。公開後に導入する場合は、利用するサービス、Cookie等の取扱い、オプトアウト方法などを追記して本ページを更新します。</p><h2>ブラウザへの保存</h2><p>記事のチェック機能は、お使いのブラウザのローカルストレージに確認状態を保存します。確認情報は当サイトのサーバーに送信されません。ブラウザのサイトデータを削除すると記録も削除されます。</p><h2>外部リンク</h2><p>メーカー公式サポートなどの外部サイトへのリンクがあります。移動先サイトには移動先のプライバシーポリシーが適用されます。</p><h2>ポリシーの更新</h2><p>機能・利用サービスの変更に合わせて本ポリシーを改定することがあります。</p><h2>お問い合わせ先</h2><p>公開前に連絡先を設定し、ここに掲載します。</p>''')
 }
-# Operator and contact are provided at launch, never invented for a preview.
-if CONTACT_EMAIL and OPERATOR_NAME:
+# The display name is provisional; never invent a contact address.
+about_body=STATIC['about'][2].replace('{operator_placeholder}',html.escape(OPERATOR_NAME))
+if CONTACT_EMAIL:
     contact_html=f'<a href="mailto:{html.escape(CONTACT_EMAIL, quote=True)}">{html.escape(CONTACT_EMAIL)}</a>'
-    STATIC['about']=(STATIC['about'][0],STATIC['about'][1],STATIC['about'][2].replace('現在は公開準備版です。公開前に運営者名・連絡方法を確定して掲載します。',f'運営：{html.escape(OPERATOR_NAME)}。お問い合わせ：{contact_html}'))
-    STATIC['privacy']=(STATIC['privacy'][0],STATIC['privacy'][1],STATIC['privacy'][2].replace('公開前に連絡先を設定し、ここに掲載します。',f'お問い合わせ：{contact_html}'))
+    about_body=about_body.replace('お問い合わせ窓口は準備中です。','お問い合わせ：'+contact_html)
+    privacy_body=STATIC['privacy'][2].replace('公開前に連絡先を設定し、ここに掲載します。','お問い合わせ：'+contact_html)
+else:
+    privacy_body=STATIC['privacy'][2].replace('公開前に連絡先を設定し、ここに掲載します。','お問い合わせ窓口は準備中です。連絡先の確定後に掲載します。')
+STATIC['about']=(*STATIC['about'][:2],about_body)
+STATIC['privacy']=(*STATIC['privacy'][:2],privacy_body+'<h2>配信基盤</h2><p>Cloudflare Workersで配信します。配信基盤ではアクセス時のIPアドレスやリクエスト情報が処理される場合があります。ブラウザ内検索やチェック情報を当サイト独自の収集機能で送信することはありません。</p><h2>現時点の広告と同意管理</h2><p>現在は広告・アクセス解析タグを設置していません。導入前に配信事業者、利用目的、Cookie等、利用地域に応じた同意管理・選択方法を確認し、このページを更新します。</p>')
+STATIC['editorial']=(*STATIC['editorial'][:2],STATIC['editorial'][2]+'<h2>確認範囲と訂正</h2><p>公式資料との照合と実機検証を区別し、確認日・対象機種・未確認の範囲を記事ごとに示します。未確認の操作を経験談として掲載しません。誤りが見つかった場合は根拠を再確認して訂正し、重要な変更は記事の更新日へ反映します。お問い合わせ窓口は準備中です。</p>')
+if CONTACT_EMAIL:
+    STATIC['editorial']=(*STATIC['editorial'][:2],STATIC['editorial'][2].replace('お問い合わせ窓口は準備中です。','お問い合わせ：'+contact_html))
 for slug,(title,description,bodytext) in STATIC.items():
     body=f'<section class="internal-hero"><div class="container"><div class="breadcrumbs"><a href="/">トップ</a>{icon("chevron")}<span>{html.escape(title)}</span></div><span class="section-kicker">INFORMATION</span><h1>{html.escape(title)}</h1><p>{html.escape(description)}</p></div></section><section class="section"><div class="container"><div class="legal-body">{bodytext}</div></div></section>'
     output(Path(slug)/'index.html',wrap(body,'/'+slug+'/',title,description))
 output(Path('404.html'),wrap('<section class="internal-hero"><div class="container"><span class="section-kicker">404 NOT FOUND</span><h1>ページが見つかりませんでした。</h1><p>記事のURLが変わった可能性があります。トップページから探してみてください。</p><p><a class="hero-cta" href="/">トップページへ '+icon('arrow')+'</a></p></div></section>',path=None,title='ページが見つかりません'))
 
-# Indexing remains disabled until a separate editorial/publication decision.
-(OUT/'sitemap.xml').unlink(missing_ok=True)
-output(Path('robots.txt'), 'User-agent: *\nDisallow: /\n')
-output(Path('_headers'), '/*\n  X-Robots-Tag: noindex, nofollow\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n')
-print(f'Generated {len(DATA)} articles, {len(NAV)} categories and 3 policy pages under {OUT}')
+# Publication is locked by default and always locked during wrangler preview/dev.
+sitemap=OUT/'sitemap.xml'
+headers='/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n'
+if INDEXING_ENABLED:
+    from xml.etree.ElementTree import Element, SubElement, tostring
+    root=Element('urlset',xmlns='http://www.sitemaps.org/schemas/sitemap/0.9')
+    for path in sorted(PUBLIC_PATHS):
+        url=SubElement(root,'url');SubElement(url,'loc').text=SITE_URL+path
+        article=next((a for a in DATA if path=='/articles/'+a['slug']+'/'),None)
+        if article: SubElement(url,'lastmod').text=article['modified']
+    output(Path('sitemap.xml'),'<?xml version="1.0" encoding="UTF-8"?>\n'+tostring(root,encoding='unicode')+'\n')
+    output(Path('robots.txt'),'User-agent: *\nAllow: /\nSitemap: '+SITE_URL+'/sitemap.xml\n')
+else:
+    sitemap.unlink(missing_ok=True)
+    output(Path('robots.txt'),'User-agent: *\nDisallow: /\n')
+    headers+='  X-Robots-Tag: noindex, nofollow\n'
+output(Path('_headers'),headers)
+print(f'Generated {len(DATA)} articles, {len(NAV)} categories under {OUT}; indexing={INDEXING_ENABLED}')
