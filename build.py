@@ -20,8 +20,9 @@ for a in DATA:
         if a.get('hardware_tested') is not False:
             raise ValueError('Hardware claims require a separate evidence workflow')
 SITE_URL=os.environ.get('SITE_URL','').rstrip('/')
-CONTACT_EMAIL=os.environ.get('CONTACT_EMAIL','').strip()
-OPERATOR_NAME=os.environ.get('OPERATOR_NAME','家電の解決ノート編集部').strip()
+OPERATOR=json.loads((ROOT/'config/operator.json').read_text(encoding='utf-8'))
+CONTACT_EMAIL=os.environ.get('CONTACT_EMAIL',OPERATOR['contact_email']).strip()
+OPERATOR_NAME=os.environ.get('OPERATOR_NAME',OPERATOR['name']).strip()
 PUBLICATION=json.loads((ROOT/'config/publication.json').read_text(encoding='utf-8'))
 BUILD_TARGET=os.environ.get('SITE_BUILD_TARGET','preview')
 WRANGLER_COMMAND=os.environ.get('WRANGLER_COMMAND','')
@@ -29,7 +30,9 @@ INDEXING_ENABLED=(PUBLICATION.get('indexing_approved') is True
     and BUILD_TARGET=='production' and WRANGLER_COMMAND=='deploy')
 if CONTACT_EMAIL and not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', CONTACT_EMAIL):
     raise ValueError('CONTACT_EMAIL must be a valid email address')
-if INDEXING_ENABLED and (not SITE_URL or not CONTACT_EMAIL or not OPERATOR_NAME
+if INDEXING_ENABLED and (not SITE_URL or not os.environ.get('CONTACT_EMAIL','').strip()
+        or not os.environ.get('OPERATOR_NAME','').strip()
+        or CONTACT_EMAIL!=OPERATOR['contact_email'] or OPERATOR_NAME!=OPERATOR['name']
         or SITE_URL!=PUBLICATION.get('production_origin')):
     raise ValueError('Approved production deploy requires matching production_origin, SITE_URL, operator and real contact')
 if SITE_URL:

@@ -6,6 +6,8 @@
 
 ## 最新の確認記録
 
+- [確定ドメイン・連絡先と本番公開前の最終確認](docs/search-publication-release.md)
+
 - [Google検索への公開準備・承認後の切り替え・Search Console・AdSense残件](docs/search-launch-preparation.md)
 
 - [公開前品質確認・未確認事項](docs/prepublication-review.md)
@@ -43,7 +45,7 @@ python tests/site_check.py
 
 ## SEO・連絡先
 
-既定はnoindexです。`config/publication.json` の承認はfalseのままです。正式URL未設定ならcanonicalを省略しsitemapを生成しません。仮の運営者表示名は「家電の解決ノート編集部」、問い合わせ先は未設定です。
+既定はnoindexです。`config/publication.json` はユーザーの検索公開承認と正式originを設定済みですが、本番ビルド条件がそろうまで解除しません。正式URL未設定ならcanonicalを省略しsitemapを生成しません。運営者名と公開連絡先は `config/operator.json` の確定値を使用し、about/editorial/privacyへ反映します。
 
 明示承認後、承認ファイルの正式origin・SITE_URL・実問い合わせ先・本番ビルド指定・wrangler deployがそろった場合のみ、公開対象ページのsitemapとAllowのrobotsを生成できます。preview/dev/通常ビルドは引き続きnoindex。設定詳細は最新の公開準備手順を参照してください。
 

@@ -49,11 +49,12 @@ with tempfile.TemporaryDirectory(prefix='kaden-build-') as temp:
     root=Path(temp)
     shutil.copytree(ROOT/'config',root/'config');shutil.copy2(ROOT/'build.py',root/'build.py');shutil.copytree(ROOT/'content',root/'content');shutil.copytree(ROOT/'site/assets',root/'site/assets')
     run(root);assert inspect(root)==24
+    (root/'config/operator.json').write_text(json.dumps({'name':'Test','contact_email':'test@example.test'}),encoding='utf-8')
     env={'SITE_URL':'https://example.test','OPERATOR_NAME':'Test','CONTACT_EMAIL':'test@example.test'}
     run(root,env);inspect(root,'https://example.test')
     for url in ('https://example.test/path','https://example.test?x=1','https://example.test/#x','https://user:pass@example.test','https://example.test:bad','http://example.test','https://'):
         run(root,{**env,'SITE_URL':url},ok=False)
-    # Simulate release only in a disposable copy; real approval stays false.
+    # Simulate public output only in a disposable copy; no external deployment.
     import xml.etree.ElementTree as ET
     approval=root/'config/publication.json'
     approval.write_text(json.dumps({'indexing_approved':True,'production_origin':'https://example.test'}),encoding='utf-8')
@@ -69,6 +70,8 @@ with tempfile.TemporaryDirectory(prefix='kaden-build-') as temp:
     assert 'X-Robots-Tag' not in (root/'site/_headers').read_text()
     assert 'Sitemap: https://example.test/sitemap.xml' in (root/'site/robots.txt').read_text()
     run(root,{**release,'CONTACT_EMAIL':''},ok=False)
+    run(root,{**release,'OPERATOR_NAME':''},ok=False)
+    run(root,{**release,'CONTACT_EMAIL':'other@example.test'},ok=False)
     run(root,{**release,'SITE_URL':'https://different.test'},ok=False)
     # Even with production flags and approval, preview/dev/direct builds are locked.
     for command in ('preview','dev',''):
