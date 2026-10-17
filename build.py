@@ -237,4 +237,3 @@ output(Path('.well-known/publication.json'),json.dumps({
 headers+='\n/.well-known/publication.json\n  X-Robots-Tag: noindex, nofollow\n'
 output(Path('_headers'),headers)
 print(f'Generated {len(DATA)} articles, {len(NAV)} categories under {OUT}; indexing={INDEXING_ENABLED}')
-
