@@ -27,7 +27,9 @@ class Page(HTMLParser):
 paths=[]
 for f in (ROOT/'site').rglob('*.html'):
     path='/'+f.relative_to(ROOT/'site').as_posix()
-    paths.append(path.removesuffix('index.html') if f.name=='index.html' else path)
+    # Workers may serve a direct /404.html asset with 200. Inspect the same
+    # template as an actual missing-route response instead.
+    paths.append('/__adsense_missing_page__/' if f.name=='404.html' else path.removesuffix('index.html'))
 assert len(paths)==36
 with sync_playwright() as p:
     b=p.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
@@ -37,7 +39,7 @@ with sync_playwright() as p:
         page=context.new_page()
     for path in sorted(paths):
         r=context.request.get(base+path)
-        assert r.status==(404 if path=='/404.html' else 200),(path,r.status)
+        assert r.status==(404 if path=='/__adsense_missing_page__/' else 200),(path,r.status)
         parsed=Page();parsed.feed(r.text())
         assert len(parsed.ads)==int(public),(path,parsed.ads)
         if public:
