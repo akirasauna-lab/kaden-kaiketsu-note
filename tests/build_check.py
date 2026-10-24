@@ -12,8 +12,12 @@ CI_MAIN={'WORKERS_CI':'1','WORKERS_CI_BRANCH':'main','WRANGLER_COMMAND':'deploy'
 class Page(HTMLParser):
     def __init__(self):
         super().__init__();self.links=[];self.ids=set();self.robots='';self.h1=0;self.canonicals=[]
+        self.in_head=False;self.ads=[]
     def handle_starttag(self,tag,attrs):
         a=dict(attrs)
+        if tag=='head':self.in_head=True
+        if tag=='script' and 'adsbygoogle' in a.get('src',''):
+            self.ads.append((self.in_head,a))
         if a.get('id'):self.ids.add(a['id'])
         if tag=='h1':self.h1+=1
         if tag=='meta' and a.get('name')=='robots':self.robots=a.get('content','')
@@ -21,6 +25,8 @@ class Page(HTMLParser):
         if tag in ('a','link','script','img'):
             u=a.get('href',a.get('src',''))
             if u.startswith(('/','#')):self.links.append(u)
+    def handle_endtag(self,tag):
+        if tag=='head':self.in_head=False
 
 def run(root,env=None,actual=None,mock=False,ok=True):
     clean={k:v for k,v in os.environ.items() if not k.startswith(('WORKERS_CI','WRANGLER_')) and k not in ('SITE_URL','SITE_BUILD_TARGET','CONTACT_EMAIL','OPERATOR_NAME')}
@@ -36,6 +42,11 @@ def inspect(root,public=False):
     site=root/'site';pages={}
     for f in site.rglob('*.html'):
         p=Page();p.feed(f.read_text(encoding='utf-8'));pages[f]=p
+        assert len(p.ads)==(1 if public else 0),(f,p.ads)
+        if public:
+            in_head,attrs=p.ads[0]
+            assert in_head and 'async' in attrs and attrs.get('crossorigin')=='anonymous',f
+            assert attrs['src']=='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2655344226898817',f
         expected='index,follow' if public and f.name!='404.html' else 'noindex,nofollow'
         assert p.robots==expected and p.h1==1,(f,p.robots)
         path='/'+str(f.relative_to(site).parent).replace('\\','/').strip('.')
@@ -48,6 +59,9 @@ def inspect(root,public=False):
             assert path.exists(),(f,u)
             if parts.fragment:assert parts.fragment in pages[path].ids,(f,u)
     headers=(site/'_headers').read_text()
+    if public:
+        assert (site/'ads.txt').read_text()=='google.com, pub-2655344226898817, DIRECT, f08c47fec0942fa0\n'
+    else:assert not (site/'ads.txt').exists()
     if public:
         assert 'X-Robots-Tag' not in headers.split('/.well-known/publication.json')[0]
         assert (site/'robots.txt').read_text()==f'User-agent: *\nAllow: /\nSitemap: {ORIGIN}/sitemap.xml\n'
