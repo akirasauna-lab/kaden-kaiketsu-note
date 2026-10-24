@@ -6,6 +6,7 @@
 
 ## 最新の確認記録
 
+- [本番限定のAdSenseサイト確認コード・ads.txt](docs/adsense-verification.md)
 - [冬向け10記事の公式情報・重複・公開検査](docs/winter-20261024-review.md)
 - [Cloudflareの追加環境変数なしで検索公開する最新仕様](docs/cloudflare-no-dashboard-variables.md)
 
@@ -17,7 +18,7 @@
 - [Workers設定と将来の公開手順](docs/workers-publishing.md)
 - [初回の戦略・10候補の選別記録](docs/content-strategy.md)（当時の未検証事項は公開前品質確認で更新）
 
-全23記事は公式資料との照合日・適用範囲・実機未検証を表示します。公式資料の整理を実体験として書きません。AdSenseや解析タグは未導入です。
+全23記事は公式資料との照合日・適用範囲・実機未検証を表示します。公式資料の整理を実体験として書きません。AdSenseのサイト確認コードとads.txtは承認済みmain本番だけで生成し、プレビューでは生成しません。広告枠とGoogle Analyticsは未導入です。
 
 ## ビルド
 
