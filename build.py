@@ -53,7 +53,7 @@ for folder,allowed in [('articles',{a['slug'] for a in DATA})]:
                 raise ValueError('Refusing to clean outside site directory')
             stale.unlink()
             if not any(stale.parent.iterdir()): stale.parent.rmdir()
-NAV=[('テレビ・動画','tv','tv'),('洗濯機','washing-machine','washer'),('エアコン','air-conditioner','aircon'),('Wi-Fi・ネット','wifi','wifi'),('スマートホーム','smart-home','smart'),('スマホ・PC','devices','laptop')]
+NAV=[('テレビ・動画','tv','tv'),('洗濯機','washing-machine','washer'),('エアコン','air-conditioner','aircon'),('Wi-Fi・ネット','wifi','wifi'),('スマートホーム','smart-home','smart'),('スマホ・PC','devices','laptop'),('加湿器','humidifier','aircon'),('暖房器具','heating','bolt')]
 # iPhone/Windows guides are shown in a practical separate category, without rewriting original article category
 for item in DATA:
     if item['slug'] in ('iphone-wifi-unavailable','windows-wifi-trouble'):
@@ -131,6 +131,8 @@ def category_cards():
       'Wi-Fi・ネット':('ネットが切れる、設定が進まない','2ガイド'),
       'スマートホーム':('ハブがオフライン、家電が反応しない','3ガイド'),
       'スマホ・PC':('スマホやPCだけネットが使えない','2ガイド'),
+      '加湿器':('湿度が上がらない、臭い、給水表示',''),
+      '暖房器具':('暖かくならない、途中で止まる',''),
     }
     for name, slug, ic in NAV:
         n=sum(1 for a in DATA if a['category']==name)
@@ -149,8 +151,8 @@ HERO='''<div class="hero-illustration" aria-label="接続状態の確認イメ�
   </div></div>'''
 
 # Home
-featured=DATA[-3:]
-allcards=''.join(card(a) for a in DATA)
+featured=sorted(DATA,key=lambda a:(a.get('seasonal_priority',0),a['modified']),reverse=True)[:3]
+allcards=''.join(card(a) for a in sorted(DATA,key=lambda a:a['modified'],reverse=True))
 category_buttons='<button type="button" class="filter-chip active" data-filter="all" aria-pressed="true">すべて <span>'+str(len(DATA))+'</span></button>'
 for cat,_,_ in NAV:
     category_buttons+=f'<button type="button" class="filter-chip" data-filter="{html.escape(cat)}" aria-pressed="false">{html.escape(cat)} <span>{sum(a["category"]==cat for a in DATA)}</span></button>'
@@ -174,6 +176,8 @@ for name,slug,ic in NAV:
 # Articles
 for a in DATA:
     other=[x for x in DATA if x['slug']!=a['slug'] and x['category']==a['category']][:3]
+    if a.get('related_slugs'):
+        other=[x for slug in a['related_slugs'] for x in DATA if x['slug']==slug]
     # Keep related guides relevant to the same appliance category.
     catpath=CAT_SLUG[a['category']]
     causes = ''

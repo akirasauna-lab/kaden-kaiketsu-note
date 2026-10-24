@@ -12,7 +12,7 @@ if not base:
         def log_message(self,*args):pass
     server=ThreadingHTTPServer(('127.0.0.1',0),partial(Quiet,directory=str(ROOT/'site')))
     threading.Thread(target=server.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{server.server_port}'
-routes=['/']+['/articles/'+a['slug']+'/' for a in DATA]+['/category/'+c+'/' for c in ('tv','washing-machine','air-conditioner','wifi','smart-home','devices')]+['/about/','/editorial/','/privacy/']
+routes=['/']+['/articles/'+a['slug']+'/' for a in DATA]+['/category/'+c+'/' for c in ('tv','washing-machine','air-conditioner','wifi','smart-home','devices','humidifier','heating')]+['/about/','/editorial/','/privacy/']
 with sync_playwright() as pw:
     chrome=os.environ.get('CHROME_PATH','')
     if not chrome and Path('C:/Program Files/Google/Chrome/Application/chrome.exe').exists():chrome='C:/Program Files/Google/Chrome/Application/chrome.exe'
@@ -31,17 +31,17 @@ with sync_playwright() as pw:
                 assert page.locator('#causes').is_visible() and page.locator('#sources a').count()>0
                 assert '実機検証：未実施' in page.locator('article').inner_text()
     page.goto(base)
-    assert page.locator('#article-results .guide-card').count()==13
+    assert page.locator('#article-results .guide-card').count()==len(DATA)
     for cat in {a['category'] for a in DATA}:
         page.locator('[data-filter="'+cat+'"]').click()
         assert page.locator('#article-results .guide-card:visible').count()==sum(a['category']==cat for a in DATA),cat
     page.locator('[data-filter="all"]').click()
-    for query,slug in [('脱水','panasonic-topload-spin-vibration'),('冷えない','daikin-aircon-not-cooling'),('Netflix','netflix-tv-freezes'),('Ｗｉｎｄｏｗｓ　１１','windows-wifi-trouble')]:
+    for query,slug in [('脱水','panasonic-topload-spin-vibration'),('冷えない','daikin-aircon-not-cooling'),('読み込めない','netflix-tv-freezes'),('Ｗｉｎｄｏｗｓ　１１','windows-wifi-trouble')]:
         page.locator('#site-search').fill(query)
         assert page.locator('#article-results .guide-card:visible').count()==1,query
         assert slug in page.locator('#article-results .guide-card:visible').get_attribute('href')
     page.locator('#site-search').fill('存在しない検索語');assert page.locator('#empty-state').is_visible()
-    page.locator('#reset-search').click();assert page.locator('#result-count').inner_text()=='13'
+    page.locator('#reset-search').click();assert page.locator('#result-count').inner_text()==str(len(DATA))
     page.set_viewport_size({'width':375,'height':900});page.locator('.mobile-menu').click();assert page.locator('#mobile-nav').is_visible()
     page.locator('#mobile-nav a').first.click();assert page.locator('#mobile-nav').is_hidden()
     page.goto(base+'/articles/daikin-aircon-not-cooling/')
@@ -56,10 +56,10 @@ with sync_playwright() as pw:
         response=context.request.get(base+'/sitemap.xml');assert response.status==404
         assert 'Disallow: /' in context.request.get(base+'/robots.txt').text()
     out=Path(os.environ.get('KADEN_SCREENSHOT_DIR',str(ROOT/'test-artifacts')));out.mkdir(exist_ok=True)
-    for route,name in [('/','home'),('/articles/fire-tv-wifi-connect/','article-existing'),('/articles/netflix-tv-freezes/','article-new')]:
+    for route,name in [('/','home'),('/articles/fire-tv-wifi-connect/','article-existing'),('/articles/panasonic-humidifier-water-lamp/','article-new')]:
         page.goto(base+route)
         page.screenshot(path=str(out/(name+'-mobile.png')),full_page=True)
     assert not errors,errors
     browser.close()
 if server:server.shutdown()
-print(f'PASS browser: {len(routes)} routes x 3 widths = {len(routes)*3}; all 13 articles, all 6 filters, search/normalization, empty/reset, mobile menu, checklist/persistence/copy, 404; no JS errors. Backend: {base}')
+print(f'PASS browser: {len(routes)} routes x 3 widths = {len(routes)*3}; all {len(DATA)} articles, all 8 filters, search/normalization, empty/reset, mobile menu, checklist/persistence/copy, 404; no JS errors. Backend: {base}')

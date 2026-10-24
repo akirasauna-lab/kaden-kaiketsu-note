@@ -52,7 +52,7 @@ def inspect(root,public=False):
         assert 'X-Robots-Tag' not in headers.split('/.well-known/publication.json')[0]
         assert (site/'robots.txt').read_text()==f'User-agent: *\nAllow: /\nSitemap: {ORIGIN}/sitemap.xml\n'
         urls=[x.text for x in ET.parse(site/'sitemap.xml').findall('.//{*}loc')]
-        assert len(urls)==23 and len(set(urls))==23
+        assert len(urls)==35 and len(set(urls))==35
         assert set(urls)=={x for p in pages.values() for x in p.canonicals}
     else:
         assert not (site/'sitemap.xml').exists()
@@ -84,7 +84,7 @@ with tempfile.TemporaryDirectory(prefix='kaden-publication-') as tmp:
     assert detect_wrangler_command(proc,999) is None
     for name in ('config','content','site/assets'):shutil.copytree(ROOT/name,root/name)
     for name in ('build.py','publication_context.py'):shutil.copy2(ROOT/name,root/name)
-    run(root);assert inspect(root)==24
+    run(root);assert inspect(root)==36
     for env,actual in [({},'deploy'),({'WORKERS_CI':'1'},'deploy'),({**CI_MAIN,'WORKERS_CI':'0'},'deploy'),({**CI_MAIN,'WORKERS_CI_BRANCH':'feature/test'},'deploy'),({**CI_MAIN,'WORKERS_CI_BRANCH':''},'deploy'),({**CI_MAIN,'WRANGLER_COMMAND':'dev'},'dev'),({**CI_MAIN,'WRANGLER_COMMAND':''},'deploy'),(CI_MAIN,'preview'),(CI_MAIN,'dev'),(CI_MAIN,'versions upload')]:
         run(root,env,actual,mock=True);inspect(root)
     run(root,CI_MAIN,None,mock=True,ok=False)
