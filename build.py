@@ -30,6 +30,10 @@ CONTACT_EMAIL=OPERATOR.get('contact_email','').strip()
 OPERATOR_NAME=OPERATOR.get('name','').strip()
 ACTUAL_COMMAND=detect_wrangler_command()
 INDEXING_ENABLED=indexing_allowed(PUBLICATION.get('indexing_approved'),os.environ,ACTUAL_COMMAND)
+# Share the verified production gate; preview/dev/unknown contexts never load ads.
+ADSENSE_CLIENT='ca-pub-2655344226898817'
+ADSENSE_ENABLED=INDEXING_ENABLED
+ADS_TXT='google.com, pub-2655344226898817, DIRECT, f08c47fec0942fa0\n'
 print('Publication context: workers_ci='+os.environ.get('WORKERS_CI','unknown')
       +'; branch='+os.environ.get('WORKERS_CI_BRANCH','unknown')
       +'; actual_wrangler='+str(ACTUAL_COMMAND)+'; indexing='+str(INDEXING_ENABLED))
@@ -97,7 +101,8 @@ BASE='''<!doctype html>
 <meta name="robots" content="{{ robots }}"><meta name="theme-color" content="#ffffff"><meta property="og:locale" content="ja_JP"><meta property="og:type" content="{{ og_type }}"/><meta property="og:site_name" content="家電の解決ノート"/><meta property="og:title" content="{{ page_title }}"/><meta property="og:description" content="{{ description }}"/>
 {% if canonical %}<link rel="canonical" href="{{ canonical }}"/><meta property="og:url" content="{{ canonical }}"/>{% endif %}
 {% if site_url %}<meta property="og:image" content="{{ site_url }}/assets/og.svg"/>{% endif %}
-<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg"><link rel="stylesheet" href="/assets/styles.css">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg"><link rel="stylesheet" href="/assets/styles.css">{% if adsense_enabled %}
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ adsense_client }}" crossorigin="anonymous"></script>{% endif %}
 {% if structured %}<script type="application/ld+json">{{ structured | safe }}</script>{% endif %}</head>
 <body>
 <a class="skip-link" href="#main">本文へスキップ</a>
@@ -116,7 +121,7 @@ def render(tpl, **kwargs):return env.from_string(tpl).render(**kwargs)
 def obj(data): return json.dumps(data,ensure_ascii=False,separators=(',',':')).replace('</','<\\/')
 def wrap(contents,path='/',title='',description='',og_type='website',structured=None):
     page_title = f'{title} | 家電の解決ノート' if title else '家電の解決ノート｜テレビ・洗濯機・エアコンの困りごと確認ガイド'
-    return render(BASE,content=contents,page_title=page_title,description=description or 'テレビ・動画配信、洗濯機、エアコンの具体的な症状を、公式情報をもとに順番に確認するガイド。',og_type=og_type,canonical=SITE_URL+path if SITE_URL and path else '',site_url=SITE_URL,robots='index,follow' if INDEXING_ENABLED and path in PUBLIC_PATHS else 'noindex,nofollow',structured=obj(structured) if structured else '',logo=icon('logo'),icon_search=icon('search'),icon_menu=icon('menu'),year=date.today().year)
+    return render(BASE,content=contents,page_title=page_title,description=description or 'テレビ・動画配信、洗濯機、エアコンの具体的な症状を、公式情報をもとに順番に確認するガイド。',og_type=og_type,canonical=SITE_URL+path if SITE_URL and path else '',site_url=SITE_URL,robots='index,follow' if INDEXING_ENABLED and path in PUBLIC_PATHS else 'noindex,nofollow',adsense_enabled=ADSENSE_ENABLED,adsense_client=ADSENSE_CLIENT,structured=obj(structured) if structured else '',logo=icon('logo'),icon_search=icon('search'),icon_menu=icon('menu'),year=date.today().year)
 def output(path,text):
     loc=OUT/path
     loc.parent.mkdir(parents=True,exist_ok=True)
@@ -206,6 +211,8 @@ else:
     privacy_body=STATIC['privacy'][2].replace('公開前に連絡先を設定し、ここに掲載します。','お問い合わせ窓口は準備中です。連絡先の確定後に掲載します。')
 STATIC['about']=(*STATIC['about'][:2],about_body)
 STATIC['privacy']=(*STATIC['privacy'][:2],privacy_body+'<h2>配信基盤</h2><p>Cloudflare Workersで配信します。配信基盤ではアクセス時のIPアドレスやリクエスト情報が処理される場合があります。ブラウザ内検索やチェック情報を当サイト独自の収集機能で送信することはありません。</p><h2>現時点の広告と同意管理</h2><p>現在は広告・アクセス解析タグを設置していません。導入前に配信事業者、利用目的、Cookie等、利用地域に応じた同意管理・選択方法を確認し、このページを更新します。</p>')
+privacy_disclosure='本番サイトではGoogle AdSenseのサイト確認・審査準備用コードを設置しています。プレビューでは読み込みません。Google Analyticsは導入していません。Googleは広告サービスでCookie等を使用し、当サイトや他サイトへのアクセス情報に基づく広告を配信する場合があります。詳しくは<a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer">Googleの広告に関する説明</a>をご確認ください。パーソナライズ広告の設定は<a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer">マイ アド センター</a>で管理できます。'
+STATIC['privacy']=(*STATIC['privacy'][:2],STATIC['privacy'][2].replace('現在のサイトには、Google AnalyticsやGoogle AdSenseの計測・広告タグは組み込まれていません。公開後に導入する場合は、利用するサービス、Cookie等の取扱い、オプトアウト方法などを追記して本ページを更新します。',privacy_disclosure).replace('現在は広告・アクセス解析タグを設置していません。導入前に配信事業者、利用目的、Cookie等、利用地域に応じた同意管理・選択方法を確認し、このページを更新します。','今回はサイト確認コードとads.txtの設置のみで、広告枠や自動広告の設定は追加していません。広告配信を始める際は、配信地域に応じた同意管理と利用者の選択方法を確認します。'))
 STATIC['editorial']=(*STATIC['editorial'][:2],STATIC['editorial'][2]+'<h2>確認範囲と訂正</h2><p>公式資料との照合と実機検証を区別し、確認日・対象機種・未確認の範囲を記事ごとに示します。未確認の操作を経験談として掲載しません。誤りが見つかった場合は根拠を再確認して訂正し、重要な変更は記事の更新日へ反映します。お問い合わせ窓口は準備中です。</p>')
 if CONTACT_EMAIL:
     STATIC['editorial']=(*STATIC['editorial'][:2],STATIC['editorial'][2].replace('お問い合わせ窓口は準備中です。','お問い合わせ：'+contact_html))
@@ -215,6 +222,10 @@ for slug,(title,description,bodytext) in STATIC.items():
 output(Path('404.html'),wrap('<section class="internal-hero"><div class="container"><span class="section-kicker">404 NOT FOUND</span><h1>ページが見つかりませんでした。</h1><p>記事のURLが変わった可能性があります。トップページから探してみてください。</p><p><a class="hero-cta" href="/">トップページへ '+icon('arrow')+'</a></p></div></section>',path=None,title='ページが見つかりません'))
 
 # Publication is locked by default and always locked during wrangler preview/dev.
+if ADSENSE_ENABLED:
+    output(Path('ads.txt'),ADS_TXT)
+else:
+    (OUT/'ads.txt').unlink(missing_ok=True)
 sitemap=OUT/'sitemap.xml'
 headers='/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n'
 if INDEXING_ENABLED:
