@@ -170,6 +170,14 @@ def category_cards():
 def card(a,context_label=''):
     return f'''<a class="guide-card" href="/articles/{a['slug']}/" data-title="{html.escape(a['title'])}" data-search="{html.escape(a['title']+' '+a['description']+' '+a['label']+' '+a['category'])}" data-cat="{html.escape(a['category'])}"><div class="card-top"><span class="card-category">{html.escape(a['category'])}</span><span class="card-min">{icon('clock')} 約{a['minutes']}分</span></div><span class="card-title">{html.escape(a['title'])}</span><span class="card-desc">{html.escape(context_label+a['description'])}</span><div class="card-bottom"><span class="brand-label">{html.escape(a['label'])}</span><span class="read-more">記事を読む {icon('arrow')}</span></div></a>'''
 
+def related_context(source,target):
+    if source['label']==target['label']:return ''
+    if target['label']=='症状別ガイド':
+        return 'メーカー共通の切り分け：部品・操作は型番の説明書を優先してください。 '
+    if source['label']=='症状別ガイド':
+        return 'メーカー別の補足：対象メーカー・型番に合う内容を確認してください。 '
+    return '別メーカー・別機器の参考：対象機器の手順をそのまま流用しないでください。 '
+
 HERO='''<div class="hero-illustration" aria-label="接続状態の確認イメージ" role="img">
   <div class="ill-top"><span class="tiny-dot"></span><span class="tiny-dot"></span><span class="tiny-dot"></span><span class="ill-title">CONNECTION CHECK</span></div>
   <div class="ill-main"><div class="ill-center"><div class="ill-device">{{ laptop | safe }}</div><div class="ill-dash left"></div><div class="ill-status"><span class="ill-status-ring">{{ wifi | safe }}</span></div><div class="ill-dash right"></div><div class="ill-device">{{ tv | safe }}</div></div>
@@ -204,7 +212,7 @@ for name,slug,ic in NAV:
 # Articles
 for a in DATA:
     other=[x for slug in NAVIGATION['related'][a['slug']] for x in DATA if x['slug']==slug]
-    related_cards=''.join(card(x,'別メーカー・別機器の参考：対象機器の手順をそのまま流用しないでください。 ' if x['label']!=a['label'] else '') for x in other)
+    related_cards=''.join(card(x,related_context(a,x)) for x in other)
     catpath=CAT_SLUG[a['category']]
     causes = ''
     if a.get('causes'):
