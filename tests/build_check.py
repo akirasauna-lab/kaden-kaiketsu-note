@@ -40,8 +40,19 @@ def run(root,env=None,actual=None,mock=False,ok=True):
 
 def inspect(root,public=False):
     site=root/'site';pages={}
+    ga4_id=json.loads((root/'config/analytics.json').read_text())['ga4_measurement_id']
     for f in site.rglob('*.html'):
-        p=Page();p.feed(f.read_text(encoding='utf-8'));pages[f]=p
+        text=f.read_text(encoding='utf-8');head=text.split('</head>')[0]
+        loader='https://www.googletagmanager.com/gtag/js?id='+ga4_id
+        assert text.count(loader)==int(public) and head.count(loader)==int(public),f
+        assert text.count('googletagmanager.com/gtag/js?')==int(public),f
+        assert head.count("gtag('config',")==int(public),f
+        if public:assert '<script async src="'+loader+'"></script>' in head,f
+        assert text.count("gtag('config', '"+ga4_id+"');")==int(public),f
+        assert head.count("gtag('config', '"+ga4_id+"');")==int(public),f
+        assert "gtag('event', 'page_view'" not in text,f
+        if not public:assert 'googletagmanager.com' not in text and 'function gtag' not in text,f
+        p=Page();p.feed(text);pages[f]=p
         assert len(p.ads)==(1 if public else 0),(f,p.ads)
         if public:
             in_head,attrs=p.ads[0]
@@ -108,8 +119,12 @@ with tempfile.TemporaryDirectory(prefix='kaden-publication-') as tmp:
         altered=json.loads(saved_navigation);altered['related']['fire-tv-wifi-connect']=targets
         navigation.write_text(json.dumps(altered),encoding='utf-8');run(root,ok=False)
     navigation.write_text(saved_navigation,encoding='utf-8')
-    stale={'SITE_URL':'https://wrong.test','CONTACT_EMAIL':'wrong@example.test','OPERATOR_NAME':'Wrong','SITE_BUILD_TARGET':'preview'}
+    stale={'SITE_URL':'https://wrong.test','CONTACT_EMAIL':'wrong@example.test','OPERATOR_NAME':'Wrong','SITE_BUILD_TARGET':'preview','GA4_MEASUREMENT_ID':'G-OTHER12345'}
     run(root,{**CI_MAIN,**stale},'deploy',mock=True);inspect(root,public=True)
+    analytics=root/'config/analytics.json';saved_analytics=analytics.read_text()
+    for invalid in ('','UA-12345',None,"G-<script>"):
+        analytics.write_text(json.dumps({'ga4_measurement_id':invalid}));run(root,ok=False)
+    analytics.write_text(saved_analytics)
     approval=root/'config/publication.json';config=json.loads(approval.read_text())
     config['indexing_approved']=False;approval.write_text(json.dumps(config))
     run(root,CI_MAIN,'deploy',mock=True);inspect(root)

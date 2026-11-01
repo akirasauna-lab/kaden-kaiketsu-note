@@ -24,6 +24,10 @@ sys.path.insert(0,str(ROOT))
 from publication_context import detect_wrangler_command, indexing_allowed
 PUBLICATION=json.loads((ROOT/'config/publication.json').read_text(encoding='utf-8'))
 OPERATOR=json.loads((ROOT/'config/operator.json').read_text(encoding='utf-8'))
+ANALYTICS=json.loads((ROOT/'config/analytics.json').read_text(encoding='utf-8'))
+GA4_MEASUREMENT_ID=ANALYTICS.get('ga4_measurement_id','')
+if not isinstance(GA4_MEASUREMENT_ID,str) or not re.fullmatch(r'G-[A-Z0-9]+',GA4_MEASUREMENT_ID):
+    raise ValueError('Configure this site-specific GA4 measurement ID in config/analytics.json')
 NAVIGATION=json.loads((ROOT/'config/navigation.json').read_text(encoding='utf-8'))
 known_slugs={a['slug'] for a in ALL_DATA}
 if set(NAVIGATION['related'])!=known_slugs:
@@ -40,6 +44,7 @@ CONTACT_EMAIL=OPERATOR.get('contact_email','').strip()
 OPERATOR_NAME=OPERATOR.get('name','').strip()
 ACTUAL_COMMAND=detect_wrangler_command()
 INDEXING_ENABLED=indexing_allowed(PUBLICATION.get('indexing_approved'),os.environ,ACTUAL_COMMAND)
+GA4_ENABLED=INDEXING_ENABLED
 # Share the verified production gate; preview/dev/unknown contexts never load ads.
 ADSENSE_CLIENT='ca-pub-2655344226898817'
 ADSENSE_ENABLED=INDEXING_ENABLED
@@ -112,7 +117,14 @@ BASE='''<!doctype html>
 {% if canonical %}<link rel="canonical" href="{{ canonical }}"/><meta property="og:url" content="{{ canonical }}"/>{% endif %}
 {% if site_url %}<meta property="og:image" content="{{ site_url }}/assets/og.svg"/>{% endif %}
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg"><link rel="stylesheet" href="/assets/styles.css">{% if adsense_enabled %}
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ adsense_client }}" crossorigin="anonymous"></script>{% endif %}
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ adsense_client }}" crossorigin="anonymous"></script>{% endif %}{% if ga4_enabled %}
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ ga4_measurement_id }}"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '{{ ga4_measurement_id }}');
+</script>{% endif %}
 {% if structured %}<script type="application/ld+json">{{ structured | safe }}</script>{% endif %}</head>
 <body>
 <a class="skip-link" href="#main">本文へスキップ</a>
@@ -131,7 +143,7 @@ def render(tpl, **kwargs):return env.from_string(tpl).render(**kwargs)
 def obj(data): return json.dumps(data,ensure_ascii=False,separators=(',',':')).replace('</','<\\/')
 def wrap(contents,path='/',title='',description='',og_type='website',structured=None):
     page_title = f'{title} | 家電の解決ノート' if title else '家電の解決ノート｜テレビ・洗濯機・エアコンの困りごと確認ガイド'
-    return render(BASE,content=contents,page_title=page_title,description=description or 'テレビ・動画配信、洗濯機、エアコンの具体的な症状を、公式情報をもとに順番に確認するガイド。',og_type=og_type,canonical=SITE_URL+path if SITE_URL and path else '',site_url=SITE_URL,robots='index,follow' if INDEXING_ENABLED and path in PUBLIC_PATHS else 'noindex,nofollow',adsense_enabled=ADSENSE_ENABLED,adsense_client=ADSENSE_CLIENT,structured=obj(structured) if structured else '',logo=icon('logo'),icon_search=icon('search'),icon_menu=icon('menu'),year=date.today().year)
+    return render(BASE,content=contents,page_title=page_title,description=description or 'テレビ・動画配信、洗濯機、エアコンの具体的な症状を、公式情報をもとに順番に確認するガイド。',og_type=og_type,canonical=SITE_URL+path if SITE_URL and path else '',site_url=SITE_URL,robots='index,follow' if INDEXING_ENABLED and path in PUBLIC_PATHS else 'noindex,nofollow',adsense_enabled=ADSENSE_ENABLED,adsense_client=ADSENSE_CLIENT,ga4_enabled=GA4_ENABLED,ga4_measurement_id=GA4_MEASUREMENT_ID,structured=obj(structured) if structured else '',logo=icon('logo'),icon_search=icon('search'),icon_menu=icon('menu'),year=date.today().year)
 def output(path,text):
     loc=OUT/path
     loc.parent.mkdir(parents=True,exist_ok=True)
@@ -220,8 +232,8 @@ else:
     privacy_body=STATIC['privacy'][2].replace('公開前に連絡先を設定し、ここに掲載します。','お問い合わせ窓口は準備中です。連絡先の確定後に掲載します。')
 STATIC['about']=(*STATIC['about'][:2],about_body)
 STATIC['privacy']=(*STATIC['privacy'][:2],privacy_body+'<h2>配信基盤</h2><p>Cloudflare Workersで配信します。配信基盤ではアクセス時のIPアドレスやリクエスト情報が処理される場合があります。ブラウザ内検索やチェック情報を当サイト独自の収集機能で送信することはありません。</p><h2>現時点の広告と同意管理</h2><p>現在は広告・アクセス解析タグを設置していません。導入前に配信事業者、利用目的、Cookie等、利用地域に応じた同意管理・選択方法を確認し、このページを更新します。</p>')
-privacy_disclosure='本番サイトではGoogle AdSenseのサイト確認・審査準備用コードを設置しています。プレビューでは読み込みません。Google Analyticsは導入していません。Googleは広告サービスでCookie等を使用し、当サイトや他サイトへのアクセス情報に基づく広告を配信する場合があります。詳しくは<a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer">Googleの広告に関する説明</a>をご確認ください。パーソナライズ広告の設定は<a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer">マイ アド センター</a>で管理できます。'
-STATIC['privacy']=(*STATIC['privacy'][:2],STATIC['privacy'][2].replace('現在のサイトには、Google AnalyticsやGoogle AdSenseの計測・広告タグは組み込まれていません。公開後に導入する場合は、利用するサービス、Cookie等の取扱い、オプトアウト方法などを追記して本ページを更新します。',privacy_disclosure).replace('現在は広告・アクセス解析タグを設置していません。導入前に配信事業者、利用目的、Cookie等、利用地域に応じた同意管理・選択方法を確認し、このページを更新します。','今回はサイト確認コードとads.txtの設置のみで、広告枠や自動広告の設定は追加していません。広告配信を始める際は、配信地域に応じた同意管理と利用者の選択方法を確認します。'))
+privacy_disclosure='本番サイトではGoogle AdSenseのサイト確認・審査準備用コードを設置しています。プレビューでは読み込みません。Google Analytics 4（GA4）を本番サイトの利用状況の分析に使用します。Cookie等を利用し、閲覧ページや端末・ブラウザーなどの利用情報を収集します。プレビューではGA4を読み込みません。詳しくは<a href="https://policies.google.com/technologies/partner-sites?hl=ja" target="_blank" rel="noopener noreferrer">Googleのデータ利用に関する説明</a>をご確認ください。Cookieはブラウザーで管理でき、<a href="https://tools.google.com/dlpage/gaoptout?hl=ja" target="_blank" rel="noopener noreferrer">Google Analyticsオプトアウト アドオン</a>も利用できます。Googleは広告サービスでCookie等を使用し、当サイトや他サイトへのアクセス情報に基づく広告を配信する場合があります。詳しくは<a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer">Googleの広告に関する説明</a>をご確認ください。パーソナライズ広告の設定は<a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer">マイ アド センター</a>で管理できます。'
+STATIC['privacy']=(*STATIC['privacy'][:2],STATIC['privacy'][2].replace('現在のサイトには、Google AnalyticsやGoogle AdSenseの計測・広告タグは組み込まれていません。公開後に導入する場合は、利用するサービス、Cookie等の取扱い、オプトアウト方法などを追記して本ページを更新します。',privacy_disclosure).replace('現在は広告・アクセス解析タグを設置していません。導入前に配信事業者、利用目的、Cookie等、利用地域に応じた同意管理・選択方法を確認し、このページを更新します。','AdSenseのサイト確認コードとads.txtを設置しています。広告枠や自動広告の設定は追加していません。広告配信を始める際は、配信地域に応じた同意管理と利用者の選択方法を確認します。'))
 STATIC['editorial']=(*STATIC['editorial'][:2],STATIC['editorial'][2]+'<h2>確認範囲と訂正</h2><p>公式資料との照合と実機検証を区別し、確認日・対象機種・未確認の範囲を記事ごとに示します。未確認の操作を経験談として掲載しません。誤りが見つかった場合は根拠を再確認して訂正し、重要な変更は記事の更新日へ反映します。お問い合わせ窓口は準備中です。</p>')
 if CONTACT_EMAIL:
     STATIC['editorial']=(*STATIC['editorial'][:2],STATIC['editorial'][2].replace('お問い合わせ窓口は準備中です。','お問い合わせ：'+contact_html))
