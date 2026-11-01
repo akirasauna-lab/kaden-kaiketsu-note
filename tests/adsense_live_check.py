@@ -30,7 +30,7 @@ for f in (ROOT/'site').rglob('*.html'):
     # Workers may serve a direct /404.html asset with 200. Inspect the same
     # template as an actual missing-route response instead.
     paths.append('/__adsense_missing_page__/' if f.name=='404.html' else path.removesuffix('index.html'))
-assert len(paths)==36
+assert len(paths)==39
 with sync_playwright() as p:
     b=p.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
     context=b.new_context();requests=[]

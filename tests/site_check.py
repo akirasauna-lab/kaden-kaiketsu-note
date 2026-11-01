@@ -37,7 +37,8 @@ with sync_playwright() as pw:
                 assert links.evaluate_all('(els)=>els.map(e=>e.getAttribute("href"))')==['/articles/'+x+'/' for x in NAVIGATION['related'][slug]],slug
                 for i,target in enumerate(NAVIGATION['related'][slug]):
                     if BY_SLUG[target]['label']!=BY_SLUG[slug]['label']:
-                        assert '別メーカー・別機器の参考' in links.nth(i).inner_text(),(slug,target)
+                        note=('メーカー共通の切り分け' if BY_SLUG[target]['label']=='症状別ガイド' else 'メーカー別の補足' if BY_SLUG[slug]['label']=='症状別ガイド' else '別メーカー・別機器の参考')
+                        assert note in links.nth(i).inner_text(),(slug,target)
     page.goto(base)
     concerns=page.locator('.suggestion-row a.suggestion')
     assert concerns.count()==len(NAVIGATION['winter_concerns'])

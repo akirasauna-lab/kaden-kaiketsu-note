@@ -21,15 +21,18 @@
     "netflix-tv-freezes": ["netflix-tv-no-sound", "netflix-tv-subtitles-missing", "fire-tv-wifi-connect"],
     "panasonic-topload-spin-vibration": [],
     "daikin-aircon-not-cooling": ["daikin-heating-not-warm"],
-    "daikin-heating-not-warm": ["daikin-heating-defrost-stops", "daikin-aircon-not-cooling"],
-    "daikin-heating-defrost-stops": ["daikin-heating-not-warm", "hisense-heating-outdoor-water"],
+    "daikin-heating-not-warm": ["aircon-heating-wont-start", "daikin-heating-defrost-stops", "daikin-aircon-not-cooling"],
+    "daikin-heating-defrost-stops": ["daikin-heating-not-warm", "aircon-heating-wont-start", "hisense-heating-outdoor-water"],
     "hisense-heating-outdoor-water": ["daikin-heating-defrost-stops"],
-    "panasonic-humidifier-low-humidity": ["panasonic-humidifier-filter-smell", "panasonic-humidifier-water-lamp"],
-    "panasonic-humidifier-filter-smell": ["panasonic-humidifier-low-humidity", "panasonic-humidifier-water-lamp"],
-    "panasonic-humidifier-water-lamp": ["panasonic-humidifier-low-humidity", "panasonic-humidifier-filter-smell"],
+    "panasonic-humidifier-low-humidity": ["humidifier-no-mist", "panasonic-humidifier-filter-smell", "panasonic-humidifier-water-lamp"],
+    "panasonic-humidifier-filter-smell": ["humidifier-water-leak", "panasonic-humidifier-low-humidity", "panasonic-humidifier-water-lamp"],
+    "panasonic-humidifier-water-lamp": ["humidifier-no-mist", "humidifier-water-leak", "panasonic-humidifier-low-humidity"],
     "koden-electric-blanket-not-warm": ["panasonic-ceramic-heater-stops"],
     "panasonic-ceramic-heater-stops": ["koden-electric-blanket-not-warm"],
     "netflix-tv-no-sound": ["netflix-tv-freezes", "netflix-tv-subtitles-missing", "fire-tv-no-picture"],
-    "netflix-tv-subtitles-missing": ["netflix-tv-no-sound", "netflix-tv-freezes"]
+    "netflix-tv-subtitles-missing": ["netflix-tv-no-sound", "netflix-tv-freezes"],
+    "aircon-heating-wont-start": ["daikin-heating-not-warm", "daikin-heating-defrost-stops"],
+    "humidifier-water-leak": ["humidifier-no-mist", "panasonic-humidifier-water-lamp", "panasonic-humidifier-filter-smell"],
+    "humidifier-no-mist": ["panasonic-humidifier-low-humidity", "panasonic-humidifier-water-lamp", "humidifier-water-leak"]
   }
 }

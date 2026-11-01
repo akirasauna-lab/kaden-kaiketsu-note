@@ -6,7 +6,7 @@ from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 base=sys.argv[1].rstrip('/')
 paths=['/__ga4_missing_page__/' if f.name=='404.html' else '/'+f.relative_to(ROOT/'site').as_posix().removesuffix('index.html') for f in (ROOT/'site').rglob('*.html')]
-assert len(paths)==36
+assert len(paths)==39
 with sync_playwright() as p:
     b=p.chromium.launch(executable_path='C:/Program Files/Google/Chrome/Application/chrome.exe',headless=True)
     context=b.new_context();requests=[]
