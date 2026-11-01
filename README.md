@@ -6,6 +6,7 @@
 
 ## 最新の確認記録
 
+- [既存23記事の冬向け導線・GA4確認・HTTP転送の残件](docs/seo-20261101-review.md)
 - [本番限定のAdSenseサイト確認コード・ads.txt](docs/adsense-verification.md)
 - [冬向け10記事の公式情報・重複・公開検査](docs/winter-20261024-review.md)
 - [Cloudflareの追加環境変数なしで検索公開する最新仕様](docs/cloudflare-no-dashboard-variables.md)

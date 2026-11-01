@@ -103,6 +103,11 @@ with tempfile.TemporaryDirectory(prefix='kaden-publication-') as tmp:
         run(root,env,actual,mock=True);inspect(root)
     run(root,CI_MAIN,None,mock=True,ok=False)
     run(root,CI_MAIN,'deploy',mock=True);inspect(root,public=True)
+    navigation=root/'config/navigation.json';saved_navigation=navigation.read_text(encoding='utf-8')
+    for targets in (['unknown-article'],['fire-tv-wifi-connect'],['fire-tv-no-picture','fire-tv-no-picture']):
+        altered=json.loads(saved_navigation);altered['related']['fire-tv-wifi-connect']=targets
+        navigation.write_text(json.dumps(altered),encoding='utf-8');run(root,ok=False)
+    navigation.write_text(saved_navigation,encoding='utf-8')
     stale={'SITE_URL':'https://wrong.test','CONTACT_EMAIL':'wrong@example.test','OPERATOR_NAME':'Wrong','SITE_BUILD_TARGET':'preview'}
     run(root,{**CI_MAIN,**stale},'deploy',mock=True);inspect(root,public=True)
     approval=root/'config/publication.json';config=json.loads(approval.read_text())

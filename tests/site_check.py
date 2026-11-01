@@ -6,6 +6,8 @@ from functools import partial
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 DATA=json.loads((ROOT/'content/articles.json').read_text(encoding='utf-8'))
+NAVIGATION=json.loads((ROOT/'config/navigation.json').read_text(encoding='utf-8'))
+BY_SLUG={a['slug']:a for a in DATA}
 server=None;base=os.environ.get('SITE_TEST_URL','')
 if not base:
     class Quiet(SimpleHTTPRequestHandler):
@@ -30,12 +32,27 @@ with sync_playwright() as pw:
             if '/articles/' in route:
                 assert page.locator('#causes').is_visible() and page.locator('#sources a').count()>0
                 assert '実機検証：未実施' in page.locator('article').inner_text()
+                slug=route.strip('/').split('/')[-1]
+                links=page.locator('.related-section .guide-card')
+                assert links.evaluate_all('(els)=>els.map(e=>e.getAttribute("href"))')==['/articles/'+x+'/' for x in NAVIGATION['related'][slug]],slug
+                for i,target in enumerate(NAVIGATION['related'][slug]):
+                    if BY_SLUG[target]['label']!=BY_SLUG[slug]['label']:
+                        assert '別メーカー・別機器の参考' in links.nth(i).inner_text(),(slug,target)
+    page.goto(base)
+    concerns=page.locator('.suggestion-row a.suggestion')
+    assert concerns.count()==len(NAVIGATION['winter_concerns'])
+    for i,item in enumerate(NAVIGATION['winter_concerns']):
+        assert concerns.nth(i).get_attribute('href')=='/articles/'+item['slug']+'/'
+    concerns.first.click();assert page.url.endswith('/articles/daikin-heating-not-warm/')
     page.goto(base)
     assert page.locator('#article-results .guide-card').count()==len(DATA)
     for cat in {a['category'] for a in DATA}:
         page.locator('[data-filter="'+cat+'"]').click()
         assert page.locator('#article-results .guide-card:visible').count()==sum(a['category']==cat for a in DATA),cat
     page.locator('[data-filter="all"]').click()
+    for query,slug in [('暖房 暖まらない','daikin-heating-not-warm'),('加湿器 湿度','panasonic-humidifier-low-humidity'),('電気毛布','koden-electric-blanket-not-warm')]:
+        page.locator('#site-search').fill(query)
+        assert page.locator('#article-results .guide-card:visible[href="/articles/'+slug+'/"]').count()==1,query
     for query,slug in [('脱水','panasonic-topload-spin-vibration'),('冷えない','daikin-aircon-not-cooling'),('読み込めない','netflix-tv-freezes'),('Ｗｉｎｄｏｗｓ　１１','windows-wifi-trouble')]:
         page.locator('#site-search').fill(query)
         assert page.locator('#article-results .guide-card:visible').count()==1,query

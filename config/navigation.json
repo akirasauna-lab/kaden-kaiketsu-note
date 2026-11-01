@@ -1,0 +1,35 @@
+{
+  "winter_concerns": [
+    {"label": "暖房が暖まらない", "slug": "daikin-heating-not-warm"},
+    {"label": "暖房が途中で止まる", "slug": "daikin-heating-defrost-stops"},
+    {"label": "加湿器の湿度が上がらない", "slug": "panasonic-humidifier-low-humidity"},
+    {"label": "加湿器が臭い", "slug": "panasonic-humidifier-filter-smell"},
+    {"label": "電気毛布が暖まらない", "slug": "koden-electric-blanket-not-warm"},
+    {"label": "ヒーターが止まる", "slug": "panasonic-ceramic-heater-stops"}
+  ],
+  "related": {
+    "fire-tv-wifi-connect": ["fire-tv-no-picture", "fire-tv-remote-unresponsive", "netflix-tv-freezes"],
+    "fire-tv-no-picture": ["fire-tv-remote-unresponsive", "fire-tv-wifi-connect", "netflix-tv-no-sound"],
+    "fire-tv-remote-unresponsive": ["fire-tv-no-picture", "fire-tv-wifi-connect"],
+    "chromecast-device-not-found": ["chromecast-wifi-setup", "iphone-wifi-unavailable", "windows-wifi-trouble"],
+    "chromecast-wifi-setup": ["chromecast-device-not-found", "iphone-wifi-unavailable", "windows-wifi-trouble"],
+    "switchbot-hub2-wifi": ["switchbot-ir-remote-register", "switchbot-bot-not-working"],
+    "switchbot-bot-not-working": ["switchbot-hub2-wifi", "switchbot-ir-remote-register"],
+    "switchbot-ir-remote-register": ["switchbot-hub2-wifi", "switchbot-bot-not-working"],
+    "iphone-wifi-unavailable": ["windows-wifi-trouble", "chromecast-device-not-found"],
+    "windows-wifi-trouble": ["iphone-wifi-unavailable", "chromecast-device-not-found"],
+    "netflix-tv-freezes": ["netflix-tv-no-sound", "netflix-tv-subtitles-missing", "fire-tv-wifi-connect"],
+    "panasonic-topload-spin-vibration": [],
+    "daikin-aircon-not-cooling": ["daikin-heating-not-warm"],
+    "daikin-heating-not-warm": ["daikin-heating-defrost-stops", "daikin-aircon-not-cooling"],
+    "daikin-heating-defrost-stops": ["daikin-heating-not-warm", "hisense-heating-outdoor-water"],
+    "hisense-heating-outdoor-water": ["daikin-heating-defrost-stops"],
+    "panasonic-humidifier-low-humidity": ["panasonic-humidifier-filter-smell", "panasonic-humidifier-water-lamp"],
+    "panasonic-humidifier-filter-smell": ["panasonic-humidifier-low-humidity", "panasonic-humidifier-water-lamp"],
+    "panasonic-humidifier-water-lamp": ["panasonic-humidifier-low-humidity", "panasonic-humidifier-filter-smell"],
+    "koden-electric-blanket-not-warm": ["panasonic-ceramic-heater-stops"],
+    "panasonic-ceramic-heater-stops": ["koden-electric-blanket-not-warm"],
+    "netflix-tv-no-sound": ["netflix-tv-freezes", "netflix-tv-subtitles-missing", "fire-tv-no-picture"],
+    "netflix-tv-subtitles-missing": ["netflix-tv-no-sound", "netflix-tv-freezes"]
+  }
+}
