@@ -18,7 +18,7 @@ assert mode in ('production','preview')
 public=mode=='production'
 articles=json.loads((ROOT/'content/articles.json').read_text(encoding='utf-8'))
 paths=['/']+['/articles/'+a['slug']+'/' for a in articles if a.get('review_status')!='draft']
-assert len(paths)==24, 'Expected home and 23 articles'
+assert len(paths)==27, 'Expected home and 26 articles'
 
 class SEO(HTMLParser):
     def __init__(self):
@@ -43,7 +43,7 @@ with sync_playwright() as p:
     if public:
         assert sitemap.status==200
         urls=[x.text for x in ET.fromstring(sitemap.text()).findall('.//{*}loc')]
-        assert len(urls)==35 and len(set(urls))==35
+        assert len(urls)==38 and len(set(urls))==38
         assert all(u.startswith(ORIGIN+'/') for u in urls)
         assert set(ORIGIN+path for path in paths)<=set(urls)
         assert policy.site_maps()==[ORIGIN+'/sitemap.xml']
