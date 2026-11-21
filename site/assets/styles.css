@@ -34,3 +34,25 @@
 .step.is-checked .step-num{background:#e7f6ee;border-color:#c8e8d9;color:#238366}
 .step.is-checked .step-body h3{color:#718592}
 @media(max-width:510px){.check-progress{padding:15px}.check-progress-actions button{font-size:10px;padding:8px 10px}}
+
+/* Observation branches and a local-only support handoff. */
+.article-byline { font-size: 12px; color: var(--muted); }
+.article-byline a, #decision-guide a { color: var(--brand); text-decoration: underline; }
+.decision-list { min-width: 0; border: 0; padding: 0; margin: 20px 0; }
+.decision-list legend { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+.decision-case { border: 1px solid var(--line); border-radius: 10px; padding: 18px; margin: 12px 0; }
+.decision-case label { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+.decision-case input { flex: none; width: 18px; height: 18px; margin-top: 5px; accent-color: var(--brand); }
+.decision-case:has(input:checked) { border-color: var(--brand); background: var(--blue-soft); }
+.decision-case .decision-action { margin-bottom: 0; }
+.consultation-fields { margin: 15px 0; }
+.consultation-fields label, .consultation-report-label { display: block; font-size: 12px; font-weight: 700; margin: 12px 0 6px; }
+.consultation-fields input, .consultation-fields textarea, .consultation-report {
+  display: block; width: 100%; min-width: 0; border: 1px solid #c5dcec; border-radius: 7px;
+  padding: 10px; background: #fff; color: var(--ink); font: inherit; font-size: 16px;
+}
+.consultation-fields textarea, .consultation-report { resize: vertical; overflow-wrap: anywhere; }
+.consultation-clear { border: 0; background: transparent; color: var(--brand); padding: 6px 0; text-decoration: underline; }
+.consultation-report { margin-top: 12px; }
+.consultation-report[hidden], .consultation-report-label[hidden] { display: none; }
+.consultation-fields input:focus-visible, .consultation-fields textarea:focus-visible, .consultation-report:focus-visible { outline: 3px solid #74b9eb; outline-offset: 3px; }
